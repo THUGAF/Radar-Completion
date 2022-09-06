@@ -1,12 +1,8 @@
 import os
-import datetime
-
 import torch
 import numpy as np
-import imageio
 import matplotlib.pyplot as plt
 import matplotlib.colors as pcolors
-import matplotlib.cm as cm
 
 import pyproj
 import cartopy.crs as ccrs
@@ -51,63 +47,29 @@ def plot_loss(train_loss, val_loss, output_path, filename='loss.png'):
     plt.close(fig)
 
 
-def plot_map(input_, pred, truth, timestamp, root, stage):
+def plot_map(tensor, root, stage):
     print('Plotting maps...')
-    if not os.path.exists(os.path.join(root, stage)):
-        os.mkdir(os.path.join(root, stage))
-    _plot_map_figs(input_, root, timestamp[:input_.size(0)], stage, type='input', 
-                   cmap=REF_CMAP, norm=REF_NORM)
-    _plot_map_figs(pred, root, timestamp[input_.size(0): input_.size(0) + pred.size(0)], 
-                   stage, type='pred', cmap=REF_CMAP, norm=REF_NORM)
-    _plot_map_figs(truth, root, timestamp[input_.size(0): input_.size(0) + truth.size(0)], 
-                   stage, type='truth', cmap=REF_CMAP, norm=REF_NORM)
-
-
-def _plot_map_figs(tensor, root, timestamp, stage, type, cmap, norm):
-    path = os.path.join(root, stage, type)
-    if not os.path.exists(path):
-        os.mkdir(path)
-
-    # inverse scaling
+    
+    # save tensor
     tensor = tensor.detach().cpu()
-
-    image_list = []
-    for i in range(tensor.size(0)):
-        # minus represents the time before current moment
-        if type == 'input':
-            str_min = str(6 * (i - tensor.size(0) + 1))
-        else:
-            str_min = str(6 * (i + 1))
-        file_path = '{}/{}.png'.format(path, str_min)
-        current_datetime = datetime.datetime.utcfromtimestamp(int(timestamp[i, 0]))
-        _plot_map_fig(tensor[i, 0, 0], file_path, current_datetime, cmap, norm)
-        image_list.append(imageio.imread(file_path))
+    torch.save(tensor, '{}/{}.pt'.format(root, stage))
 
     # plot the long image
-    num_rows = 2 if tensor.size(0) > 10 else 1
-    num_cols = tensor.size(0) // num_rows
+    num_rows = tensor.size(0)
+    num_cols = tensor.size(1)
     fig = plt.figure(figsize=(num_cols, num_rows), dpi=300)
-    for i in range(tensor.size(0)):
-        ax = fig.add_subplot(num_rows, num_cols, i + 1)
-        ax.imshow(np.flip(tensor[i, 0, 0].numpy(), axis=0), cmap=cmap, norm=norm)
-        ax.axis('off')
+    for r in range(num_rows):
+        for c in range(num_cols):
+            ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection=ccrs.Mercator())
+            ax = _plot_map_fig(tensor[r, c], ax, REF_CMAP, REF_NORM)
+            ax.axis('off')
     
     plt.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
-    fig.savefig('{}/{}.png'.format(path, type))
+    fig.savefig('{}/{}.png'.format(root, stage))
     plt.close(fig)
-    
-    # make gif
-    imageio.mimsave('{}/{}.gif'.format(path, type), image_list, 'GIF', duration=0.2)
-
-    # save tensor
-    torch.save(tensor, '{}/{}.pt'.format(path, type))
 
 
-def _plot_map_fig(tensor_slice, file_path, current_datetime, cmap, norm):
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    fig.suptitle('\n' + current_datetime.strftime('%Y-%m-%d %H:%M:%S'), fontsize=24)
-    ax = plt.subplot(111, projection=ccrs.Mercator())
-    ax.set_title('CR', fontsize=18)
+def _plot_map_fig(tensor_slice, ax, cmap, norm):
     ax.set_extent(AREA, crs=ccrs.PlateCarree())
     ax.coastlines()
     ax.add_feature(cfeature.BORDERS)
@@ -125,13 +87,6 @@ def _plot_map_fig(tensor_slice, file_path, current_datetime, cmap, norm):
 
     ax.xaxis.set_major_formatter(LongitudeFormatter())
     ax.yaxis.set_major_formatter(LatitudeFormatter())
-    ax.tick_params(labelsize=18)
-
-    cbar = fig.colorbar(cm.ScalarMappable(cmap=REF_CMAP, norm=REF_NORM), pad=0.05, shrink=0.7, aspect=20, 
-                        orientation='vertical', extend='both')
-    cbar.set_label('dBZ', fontsize=18)
-    cbar.ax.tick_params(labelsize=16)
-
-    plt.subplots_adjust(left=0.1, right=1, bottom=0, top=1)
-    fig.savefig(file_path)
-    plt.close(fig)
+    ax.tick_params(labelsize=10)
+    
+    return ax

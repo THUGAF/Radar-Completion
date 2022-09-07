@@ -61,10 +61,8 @@ class Trainer:
         self.args = args
 
     def fit(self, generator, discriminator, train_loader, val_loader, test_loader):
-        self.generator = generator
-        self.discriminator = discriminator
-        self.generator.to(self.args.device)
-        self.discriminator.to(self.args.device)
+        self.generator = generator.to(self.args.device)
+        self.discriminator = discriminator.to(self.args.device)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
@@ -326,11 +324,13 @@ class Trainer:
                 metrics['SSIM'].append(evaluation.evaluate_ssim(tensor, output))
                 metrics['PSNR'].append(evaluation.evaluate_psnr(tensor, output))
 
-        metrics['MAE'] = np.mean(metrics['MAE'], axis=0)
-        metrics['RMSE'] = np.mean(metrics['RMSE'], axis=0)
-        metrics['COSSIM'] = np.mean(metrics['COSSIM'], axis=0)
-        metrics['SSIM'] = np.mean(metrics['SSIM'], axis=0)
-        metrics['PSNR'] = np.mean(metrics['PSNR'], axis=0)
+        metrics['MAE'].append(np.mean(metrics['MAE'], axis=0))
+        metrics['RMSE'].append(np.mean(metrics['RMSE'], axis=0))
+        metrics['COSSIM'].append(np.mean(metrics['COSSIM'], axis=0))
+        metrics['SSIM'].append(np.mean(metrics['SSIM'], axis=0))
+        metrics['PSNR'].append(np.mean(metrics['PSNR'], axis=0))
+
+        print(metrics)
 
         df = pd.DataFrame(data=metrics)
         df.to_csv(os.path.join(self.args.output_path, 'test_metrics.csv'), float_format='%.8f', index=False)
@@ -389,7 +389,7 @@ class Trainer:
         metrics['SSIM'] = np.mean(metrics['SSIM'], axis=0)
         metrics['PSNR'] = np.mean(metrics['PSNR'], axis=0)
 
-        df = pd.DataFrame(data=metrics)
+        df = pd.DataFrame(data=metrics, index=['MAE'])
         df.to_csv(os.path.join(self.args.output_path, 'predict_metrics.csv'), float_format='%.8f', index=False)
         
         tensors = torch.cat([tensor, tensor_masked, output], dim=1)

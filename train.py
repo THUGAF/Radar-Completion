@@ -37,7 +37,7 @@ parser.add_argument('--cn_input_size', type=int, default=256)
 parser.add_argument('--batch-size', type=int, default=2)
 parser.add_argument('--max-iterations', type=int, default=100000)
 parser.add_argument('--start-iterations', type=int, default=0)
-parser.add_argument('--alpha', type=float, default=0.1)
+parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
@@ -61,10 +61,10 @@ def main(args):
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
-    generator = CompletionNetwork()
+    generator = CompletionNetwork().to(args.device)
     discriminator = ContextDiscriminator(local_input_shape=(1, args.ld_input_size, args.ld_input_size),
-                                         global_input_shape=(1, args.cn_input_size, args.cn_input_size),)
- 
+                                         global_input_shape=(1, args.cn_input_size, args.cn_input_size),).to(args.device)
+
     # Load data
     if args.train or args.test:
         train_loader, val_loader, test_loader = dataloader.load_data(args.data_path, 

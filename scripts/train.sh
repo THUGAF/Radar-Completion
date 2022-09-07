@@ -5,7 +5,7 @@ nohup python -u train.py \
     --train \
     --test \
     --predict \
-    --sample-index 17000 \
+    --sample-index 18300 \
     --early-stopping \
     --batch-size 8 \
     --num-threads 8 \

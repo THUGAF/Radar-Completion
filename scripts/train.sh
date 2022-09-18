@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=3 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandCRUnzip \
     --output-path results \
@@ -7,8 +7,8 @@ nohup python -u train.py \
     --predict \
     --sample-index 18300 \
     --early-stopping \
-    --batch-size 8 \
+    --batch-size 16 \
     --num-threads 8 \
     --num-workers 8 \
-    --display-interval 20 \
+    --display-interval 50 \
     > GLCIC.log 2>&1 &

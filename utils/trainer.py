@@ -72,6 +72,8 @@ class Trainer:
         else:
             start_iterations = 0
         self.total_epochs = int(math.ceil((self.args.max_iterations - start_iterations) / len(train_loader)))
+        self.g_epochs = int(math.ceil(self.args.g_iterations / len(train_loader)))
+        self.d_epochs = int(math.ceil(self.args.d_iterations / len(train_loader)))
         
         self.optimizer_g = Adadelta(self.generator.parameters())
         self.optimizer_d = Adadelta(self.discriminator.parameters())
@@ -103,8 +105,110 @@ class Trainer:
 
         early_stopping = EarlyStopping(verbose=True, path='bestmodel.pt')
 
+        # =================================================
+        # Pretrain G
+        # =================================================
+        for epoch in range(self.g_epochs):
+            print('\n[Pretrain G]')
+            print('Epoch: [{}][{}]'.format(epoch + 1, self.g_epochs))
+            train_loss_g = []
+
+            # Train
+            self.generator.train()
+            for i, tensor in enumerate(self.train_loader):
+                # load data
+                tensor = tensor.to(self.args.device)
+                tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
+                hole_area_fake = maskutils.gen_hole_area(
+                    (self.args.ld_input_size, self.args.ld_input_size),
+                    (tensor.shape[3], tensor.shape[2]))
+                mask = maskutils.gen_input_mask(
+                    shape=(tensor.shape[0], 1, tensor.shape[2], tensor.shape[3]),
+                    hole_size=(
+                        (self.args.hole_min_w, self.args.hole_max_w),
+                        (self.args.hole_min_h, self.args.hole_max_h)),
+                    hole_area=hole_area_fake).to(self.args.device)
+                tensor_masked = tensor - tensor * mask
+                
+                # generator forward
+                input_ = torch.cat([tensor_masked, mask], dim=1)
+                output = self.generator(input_)
+                
+                # generator loss
+                loss_g = losses.completion_network_loss(tensor, output, mask)
+                
+                # generator backward
+                self.optimizer_g.zero_grad()
+                loss_g.backward()
+                self.optimizer_g.step()
+
+                train_loss_g.append(loss_g.item())
+                if (i + 1) % self.args.display_interval == 0:
+                    print('Epoch: [{}][{}] Batch: [{}][{}] Loss G: {:.6f}'.format(
+                        epoch + 1, self.g_epochs, i + 1, len(self.train_loader), loss_g.item()))
+
+            print('Epoch: [{}][{}] Loss G: {:.6f}'.format(epoch + 1, self.g_epochs, train_loss_g[-1]))
+
+        # =================================================
+        # Pretrain D
+        # =================================================
+        for epoch in range(self.d_epochs):
+            print('\n[Pretrain D]')
+            print('Epoch: [{}][{}]'.format(epoch + 1, self.d_epochs))
+            train_loss_d = []
+
+            # Train
+            self.generator.train()
+            for i, tensor in enumerate(self.train_loader):
+                # load data
+                tensor = tensor.to(self.args.device)
+                tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
+                hole_area_fake = maskutils.gen_hole_area(
+                    (self.args.ld_input_size, self.args.ld_input_size),
+                    (tensor.shape[3], tensor.shape[2]))
+                mask = maskutils.gen_input_mask(
+                    shape=(tensor.shape[0], 1, tensor.shape[2], tensor.shape[3]),
+                    hole_size=(
+                        (self.args.hole_min_w, self.args.hole_max_w),
+                        (self.args.hole_min_h, self.args.hole_max_h)),
+                    hole_area=hole_area_fake).to(self.args.device)
+                tensor_masked = tensor - tensor * mask
+
+                # discriminator fake forward
+                input_ = torch.cat([tensor_masked, mask], dim=1)
+                output = self.generator(input_)
+                input_gd_fake = output.detach()
+                input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
+                output_fake = self.discriminator((input_ld_fake, input_gd_fake))
+
+                # discriminator real forward
+                hole_area_real = maskutils.gen_hole_area(
+                    (self.args.ld_input_size, self.args.ld_input_size),
+                    (tensor.shape[3], tensor.shape[2]))
+                input_gd_real = tensor
+                input_ld_real = maskutils.crop(input_gd_real, hole_area_real)
+                output_real = self.discriminator((input_ld_real, input_gd_real))
+                
+                # discriminator loss
+                loss_d = losses.cal_d_loss(output_fake, output_real)
+
+                # discriminator backward
+                self.optimizer_d.zero_grad()
+                loss_d.backward()
+                self.optimizer_d.step()
+
+                train_loss_d.append(loss_d.item())
+                if (i + 1) % self.args.display_interval == 0:
+                    print('Epoch: [{}][{}] Batch: [{}][{}] Loss D: {:.6f}'.format(
+                        epoch + 1, self.d_epochs, i + 1, len(self.train_loader), loss_d.item()))
+
+            print('Epoch: [{}][{}] Loss D: {:.6f}'.format(epoch + 1, self.d_epochs, train_loss_d[-1]))
+
+        # =================================================
+        # Train G and D jointly
+        # =================================================
         for epoch in range(self.total_epochs):
-            print('\n[Train]')
+            print('\n[Train jointly]')
             print('Epoch: [{}][{}]'.format(epoch + 1, self.total_epochs))
             train_loss_g = []
             train_loss_d = []
@@ -131,7 +235,7 @@ class Trainer:
                 tensor_masked = tensor - tensor * mask
                 
                 # discriminator fake forward
-                input_ = torch.cat((tensor_masked, mask), dim=1)
+                input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
                 input_gd_fake = output.detach()
                 input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
@@ -176,9 +280,8 @@ class Trainer:
                 train_loss_g.append(loss_g.item())
                 train_loss_d.append(loss_d.item())
                 if (i + 1) % self.args.display_interval == 0:
-                    print('Epoch: [{}][{}] Batch: [{}][{}] Loss G: {:.4f} Loss D: {:.4f}'.format(
-                        epoch + 1, self.total_epochs, i + 1, len(self.train_loader), loss_g.item(), loss_d.item()
-                    ))
+                    print('Epoch: [{}][{}] Batch: [{}][{}] Loss G: {:.6f} Loss D: {:.6f}'.format(
+                        epoch + 1, self.total_epochs, i + 1, len(self.train_loader), loss_g.item(), loss_d.item()))
             
             self.train_loss_g.append(np.mean(train_loss_g))
             self.train_loss_d.append(np.mean(train_loss_d))
@@ -187,7 +290,7 @@ class Trainer:
             
             tensors = torch.cat([tensor, tensor_masked, output], dim=1)
             visualizer.plot_map(tensors, self.args.output_path, 'train')
-            print('Epoch: [{}][{}] Loss G: {:.4f} Loss D: {:.4f}'.format(
+            print('Epoch: [{}][{}] Loss G: {:.6f} Loss D: {:.6f}'.format(
                 epoch + 1, self.total_epochs, self.train_loss_g[-1], self.train_loss_d[-1]))
 
             # Validate
@@ -212,7 +315,7 @@ class Trainer:
                     tensor_masked = tensor - tensor * mask
 
                     # discriminator fake forward
-                    input_ = torch.cat((tensor_masked, mask), dim=1)
+                    input_ = torch.cat([tensor_masked, mask], dim=1)
                     output = self.generator(input_)
                     input_gd_fake = output.detach()
                     input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
@@ -247,9 +350,8 @@ class Trainer:
                     val_loss_g.append(loss_g.item())
                     val_loss_d.append(loss_d.item())
                     if (i + 1) % self.args.display_interval == 0:
-                        print('Epoch: [{}][{}] Batch: [{}][{}] Loss G: {:.4f} Loss D: {:.4f}'.format(
-                            epoch + 1, self.total_epochs, i + 1, len(self.val_loader), loss_g.item(), loss_d.item()
-                        ))
+                        print('Epoch: [{}][{}] Batch: [{}][{}] Loss G: {:.6f} Loss D: {:.6f}'.format(
+                            epoch + 1, self.total_epochs, i + 1, len(self.val_loader), loss_g.item(), loss_d.item()))
                             
             self.val_loss_g.append(np.mean(val_loss_g))
             self.val_loss_d.append(np.mean(val_loss_d))            
@@ -258,7 +360,7 @@ class Trainer:
             
             tensors = torch.cat([tensor, tensor_masked, output], dim=1)
             visualizer.plot_map(tensors, self.args.output_path, 'val')
-            print('Epoch: [{}][{}] Loss G: {:.4f} Loss D: {:.4f}'.format(
+            print('Epoch: [{}][{}] Loss G: {:.6f} Loss D: {:.6f}'.format(
                 epoch + 1, self.total_epochs, self.val_loss_g[-1], self.val_loss_d[-1]))
 
             visualizer.plot_loss(self.train_loss_g, self.val_loss_g, self.args.output_path, 'loss_g.png')
@@ -306,7 +408,7 @@ class Trainer:
                 tensor_masked = tensor - tensor * mask
 
                 # discriminator fake forward
-                input_ = torch.cat((tensor_masked, mask), dim=1)
+                input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
 
                 # back scaling
@@ -329,8 +431,6 @@ class Trainer:
         metrics['COSSIM'].append(np.mean(metrics['COSSIM'], axis=0))
         metrics['SSIM'].append(np.mean(metrics['SSIM'], axis=0))
         metrics['PSNR'].append(np.mean(metrics['PSNR'], axis=0))
-
-        print(metrics)
 
         df = pd.DataFrame(data=metrics)
         df.to_csv(os.path.join(self.args.output_path, 'test_metrics.csv'), float_format='%.8f', index=False)
@@ -368,7 +468,7 @@ class Trainer:
                 tensor_masked = tensor - tensor * mask
 
                 # discriminator fake forward
-                input_ = torch.cat((tensor_masked, mask), dim=1)
+                input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = generator(input_)
 
                 # back scaling

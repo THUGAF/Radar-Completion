@@ -37,7 +37,7 @@ PRCP_NORM = pcolors.BoundaryNorm([0, 0.1, 1, 2, 5, 10, 20, 30, 50, 100], PRCP_CM
 
 
 def plot_loss(train_loss, val_loss, output_path, filename='loss.png'):
-    fig = plt.figure(figsize=(6, 4), dpi=300)
+    fig = plt.figure(figsize=(6, 4), dpi=600)
     ax = plt.subplot(111)
     ax.plot(range(1, len(train_loss) + 1), train_loss, 'b')
     ax.plot(range(1, len(val_loss) + 1), val_loss, 'r')
@@ -57,7 +57,7 @@ def plot_map(tensor, root, stage):
     # plot the long image
     num_rows = tensor.size(0)
     num_cols = tensor.size(1)
-    fig = plt.figure(figsize=(num_cols, num_rows), dpi=300)
+    fig = plt.figure(figsize=(num_cols * 2, num_rows * 2), dpi=600)
     for r in range(num_rows):
         for c in range(num_cols):
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection=ccrs.Mercator())

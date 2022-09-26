@@ -133,6 +133,7 @@ class Trainer:
                 # generator forward
                 input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
+                output = output * mask + tensor * (1 - mask)
                 
                 # generator loss
                 loss_g = losses.completion_network_loss(tensor, output, mask)
@@ -177,6 +178,7 @@ class Trainer:
                 # discriminator fake forward
                 input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
+                output = output * mask + tensor * (1 - mask)
                 input_gd_fake = output.detach()
                 input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
                 output_fake = self.discriminator((input_ld_fake, input_gd_fake))
@@ -237,6 +239,7 @@ class Trainer:
                 # discriminator fake forward
                 input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
+                output = output * mask + tensor * (1 - mask)
                 input_gd_fake = output.detach()
                 input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
                 output_fake = self.discriminator((input_ld_fake, input_gd_fake))
@@ -317,6 +320,7 @@ class Trainer:
                     # discriminator fake forward
                     input_ = torch.cat([tensor_masked, mask], dim=1)
                     output = self.generator(input_)
+                    output = output * mask + tensor * (1 - mask)
                     input_gd_fake = output.detach()
                     input_ld_fake = maskutils.crop(input_gd_fake, hole_area_fake)
                     output_fake = self.discriminator((input_ld_fake, input_gd_fake))
@@ -410,6 +414,7 @@ class Trainer:
                 # discriminator fake forward
                 input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = self.generator(input_)
+                output = output * mask + tensor * (1 - mask)
 
                 # back scaling
                 tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)
@@ -470,6 +475,7 @@ class Trainer:
                 # discriminator fake forward
                 input_ = torch.cat([tensor_masked, mask], dim=1)
                 output = generator(input_)
+                output = output * mask + tensor * (1 - mask)
 
                 # back scaling
                 tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)

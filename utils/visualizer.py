@@ -4,24 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as pcolors
 
-import pyproj
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-
-
-plt.rcParams['font.sans-serif'] = 'Arial'
-
-# Coordinate transformation
-TRANS_WGS84_TO_UTM = pyproj.Transformer.from_crs('epsg:4326', 'epsg:3857')
-TRANS_UTM_TO_WGS84 = pyproj.Transformer.from_crs('epsg:3857', 'epsg:4326')
-
-# Global information
-CENTER_LON, CENTER_LAT = 116.47195, 39.808887
-CENTER_UTM_X, CENTER_UTM_Y = TRANS_WGS84_TO_UTM.transform(CENTER_LAT, CENTER_LON)
-LEFT_BOTTOM_LAT, LEFT_BOTTOM_LON = TRANS_UTM_TO_WGS84.transform(CENTER_UTM_X - 128000, CENTER_UTM_Y - 64000)
-RIGHT_TOP_LAT, RIGHT_TOP_LON = TRANS_UTM_TO_WGS84.transform(CENTER_UTM_X + 128000, CENTER_UTM_Y + 192000)
-AREA = [LEFT_BOTTOM_LON, RIGHT_TOP_LON, LEFT_BOTTOM_LAT, RIGHT_TOP_LAT]
 
 REF_CMAP = pcolors.ListedColormap([[255 / 255, 255 / 255, 255 / 255], [41 / 255, 237 / 255, 238 / 255], [29 / 255, 175 / 255, 243 / 255],
                                    [10 / 255, 35 / 255, 244 / 255], [41 / 255, 253 / 255, 47 / 255], [30 / 255, 199 / 255, 34 / 255],
@@ -30,13 +12,11 @@ REF_CMAP = pcolors.ListedColormap([[255 / 255, 255 / 255, 255 / 255], [41 / 255,
                                    [189 / 255, 8 / 255, 19 / 255], [219 / 255, 102 / 255, 252 / 255], [186 / 255, 36 / 255, 235 / 255]])
 REF_NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), REF_CMAP.N)
 
-PRCP_CMAP = pcolors.ListedColormap([[255 / 255, 255 / 255, 255 / 255], [204 / 255, 243 / 255, 203 / 255], [173 / 255, 234 / 255, 169 / 255], 
-                                    [93 / 255, 190 / 255, 107 / 255], [120 / 255, 190 / 255, 252 / 255], [44 / 255, 56 / 255, 227 / 255], 
-                                    [235 / 255, 61 / 255, 248 / 255], [215 / 255, 106 / 255, 62 / 255], [140 / 255, 48 / 255, 104 / 255]])
-PRCP_NORM = pcolors.BoundaryNorm([0, 0.1, 1, 2, 5, 10, 20, 30, 50, 100], PRCP_CMAP.N)
+plt.rcParams['font.sans-serif'] = 'Arial'
 
 
-def plot_loss(train_loss, val_loss, output_path, filename='loss.png'):
+def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, 
+              output_path: str, filename: str = 'loss.png') -> None:
     fig = plt.figure(figsize=(6, 4), dpi=600)
     ax = plt.subplot(111)
     ax.plot(range(1, len(train_loss) + 1), train_loss, 'b')
@@ -47,46 +27,43 @@ def plot_loss(train_loss, val_loss, output_path, filename='loss.png'):
     plt.close(fig)
 
 
-def plot_map(tensor, root, stage):
-    print('Plotting maps...')
+def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_point: float, 
+                 anchor: int, blockage_len: int, root: str, stage: str) -> None:
+    print('Plotting tensors...')
     
     # save tensor
     tensor = tensor.detach().cpu()
     torch.save(tensor, '{}/{}.pt'.format(root, stage))
 
     # plot the long image
-    num_rows = tensor.size(0)
-    num_cols = tensor.size(1)
-    fig = plt.figure(figsize=(num_cols * 2, num_rows * 2), dpi=600)
+    num_rows, num_cols = tensor.size(0), tensor.size(1)
+    azimuth_size, radial_size = tensor.size(2), tensor.size(3)
+    thetas = np.arange(azimuth_start_point, azimuth_start_point + azimuth_size) / 180 * np.pi
+    rhos = np.arange(radial_start_point, radial_start_point + radial_size)
+    thetas, rhos = np.meshgrid(thetas, rhos)
+    fig = plt.figure(figsize=(num_cols * 4, num_rows * 4), dpi=600)
     for r in range(num_rows):
         for c in range(num_cols):
-            ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection=ccrs.Mercator())
-            ax = _plot_map_fig(tensor[r, c], ax, REF_CMAP, REF_NORM)
-            ax.axis('off')
-    
-    plt.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
-    fig.savefig('{}/{}.png'.format(root, stage))
+            ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
+            pm = ax.pcolormesh(thetas, rhos, tensor[r, c].T, cmap=REF_CMAP, norm=REF_NORM)
+            if c in [0, 4, 5]:
+                ax.plot(np.ones(radial_size) * anchor, 
+                        np.arange(radial_start_point, radial_start_point + radial_size),
+                        '--', color='k', linewidth=1)
+                ax.plot(np.ones(radial_size) * (anchor + blockage_len),
+                        np.arange(radial_start_point, radial_start_point + radial_size),
+                        '--', color='k', linewidth=1)
+            ax.set_xlim(azimuth_start_point / 180 * np.pi, (azimuth_start_point + azimuth_size) / 180 * np.pi)
+            ax.set_rlim(radial_start_point, radial_start_point + radial_size)
+            ax.set_theta_zero_location('N')
+            ax.set_theta_direction('clockwise')
+            ax.set_theta_offset((azimuth_start_point + 180) / 180 * np.pi)
+            ax.grid(True, linewidth=1)
+            ax.tick_params(labelsize=10)
+
+            cbar = fig.colorbar(pm, ax=ax, pad=0.1, aspect=20, shrink=0.5, extend='both')
+            cbar.set_label('dBZ', fontsize=10)
+            cbar.ax.tick_params(labelsize=8)
+
+    fig.savefig('{}/{}.png'.format(root, stage), bbox_inches='tight')
     plt.close(fig)
-
-
-def _plot_map_fig(tensor_slice, ax, cmap, norm):
-    ax.set_extent(AREA, crs=ccrs.PlateCarree())
-    ax.coastlines()
-    ax.add_feature(cfeature.BORDERS)
-    ax.add_feature(cfeature.STATES)
-
-    tensor_slice = np.flip(tensor_slice.numpy(), axis=0)
-    ax.imshow(tensor_slice, cmap=cmap, norm=norm, extent=AREA, transform=ccrs.PlateCarree())
-
-    xticks = np.arange(np.ceil(2 * AREA[0]) / 2, np.ceil(2 * AREA[1]) / 2, 0.5)
-    yticks = np.arange(np.ceil(2 * AREA[2]) / 2, np.ceil(2 * AREA[3]) / 2, 0.5)
-    ax.set_xticks(np.arange(np.ceil(AREA[0]), np.ceil(AREA[1]), 1), crs=ccrs.PlateCarree())
-    ax.set_yticks(np.arange(np.ceil(AREA[2]), np.ceil(AREA[3]), 1), crs=ccrs.PlateCarree())
-    ax.gridlines(crs=ccrs.PlateCarree(), xlocs=xticks, ylocs=yticks, draw_labels=False, 
-                 linewidth=1, linestyle=':', color='k', alpha=0.8)
-
-    ax.xaxis.set_major_formatter(LongitudeFormatter())
-    ax.yaxis.set_major_formatter(LatitudeFormatter())
-    ax.tick_params(labelsize=10)
-    
-    return ax

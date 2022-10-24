@@ -1,1 +1,1 @@
-from .model import CompletionNetwork, ContextDiscriminator
+from .model import CompletionNetwork

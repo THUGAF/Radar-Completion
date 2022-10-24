@@ -138,7 +138,7 @@ class Trainer:
             print('Epoch: [{}][{}] Loss: {:.6f}'.format(epoch + 1, self.total_epochs, self.train_loss[-1]))
             
             # Plot tensors
-            tensors = torch.cat([tensor, masked_tensor[:, :1], output], dim=1)
+            tensors = torch.cat([output, tensor], dim=1)
             visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0], 
                                     anchor, blockage_len, self.args.output_path, 'train')
             print('Tensors plotted.')
@@ -177,7 +177,7 @@ class Trainer:
             print('Epoch: [{}][{}] Loss: {:.6f}'.format(epoch + 1, self.total_epochs, self.val_loss[-1]))
             
             # Plot tensors
-            tensors = torch.cat([tensor, masked_tensor[:, :1], output], dim=1)
+            tensors = torch.cat([output, tensor], dim=1)
             visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
                                     anchor, blockage_len, self.args.output_path, 'val')
             print('Tensors plotted.')
@@ -247,7 +247,7 @@ class Trainer:
 
         df = pd.DataFrame(data=metrics)
         df.to_csv(os.path.join(self.args.output_path, 'test_metrics.csv'), float_format='%.8f', index=False)
-        tensors = torch.cat([tensor, masked_tensor[:, :1], output], dim=1)
+        tensors = torch.cat([output, tensor], dim=1)
         visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
                                 anchor, blockage_len, self.args.output_path, 'test')
         print('Test done.')
@@ -296,7 +296,7 @@ class Trainer:
 
         df = pd.DataFrame(data=metrics, index=['MAE'])
         df.to_csv(os.path.join(self.args.output_path, 'predict_metrics.csv'), float_format='%.8f', index=False)
-        tensors = torch.cat([tensor, masked_tensor[:, :1], output], dim=1)
+        tensors = torch.cat([output, tensor], dim=1)
         visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
                                 anchor, blockage_len, self.args.output_path, 'predict')
         print('Predict done.')

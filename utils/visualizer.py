@@ -46,7 +46,7 @@ def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_
         for c in range(num_cols):
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
             pm = ax.pcolormesh(thetas, rhos, tensor[r, c].T, cmap=REF_CMAP, norm=REF_NORM)
-            if c in [0, 4, 5]:
+            if c == 0 or c == 1:
                 ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
                         np.arange(radial_start_point, radial_start_point + radial_size), 
                         '--', color='k', linewidth=1)

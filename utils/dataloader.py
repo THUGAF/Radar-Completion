@@ -95,7 +95,6 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
 
     dataset_size = len(dataset)
     indices = list(range(dataset_size))
-    random.shuffle(indices)
 
     train_node = round(train_ratio * dataset_size)
     val_node = round(valid_ratio * dataset_size)

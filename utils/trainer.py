@@ -152,7 +152,7 @@ class Trainer:
                     # load data
                     tensor = tensor.to(self.args.device)
                     tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
-                    masked_tensor, mask = maskutils.gen_blockage_mask(tensor, 
+                    masked_tensor, mask, anchor, blockage_len = maskutils.gen_blockage_mask(tensor,
                         self.args.azimuth_blockage_range, self.args.random_seed + i)
 
                     # forward

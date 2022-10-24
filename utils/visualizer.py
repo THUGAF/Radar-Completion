@@ -47,11 +47,11 @@ def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
             pm = ax.pcolormesh(thetas, rhos, tensor[r, c].T, cmap=REF_CMAP, norm=REF_NORM)
             if c in [0, 4, 5]:
-                ax.plot(np.ones(radial_size) * anchor, 
-                        np.arange(radial_start_point, radial_start_point + radial_size),
+                ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
+                        np.arange(radial_start_point, radial_start_point + radial_size), 
                         '--', color='k', linewidth=1)
-                ax.plot(np.ones(radial_size) * (anchor + blockage_len),
-                        np.arange(radial_start_point, radial_start_point + radial_size),
+                ax.plot(np.ones(radial_size) * (anchor + blockage_len + azimuth_start_point) / 180 * np.pi,
+                        np.arange(radial_start_point, radial_start_point + radial_size), 
                         '--', color='k', linewidth=1)
             ax.set_xlim(azimuth_start_point / 180 * np.pi, (azimuth_start_point + azimuth_size) / 180 * np.pi)
             ax.set_rlim(radial_start_point, radial_start_point + radial_size)
@@ -61,7 +61,7 @@ def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_
             ax.grid(True, linewidth=1)
             ax.tick_params(labelsize=10)
 
-            cbar = fig.colorbar(pm, ax=ax, pad=0.1, aspect=20, shrink=0.5, extend='both')
+            cbar = fig.colorbar(pm, ax=ax, pad=0.2, aspect=20, shrink=0.4, extend='both')
             cbar.set_label('dBZ', fontsize=10)
             cbar.ax.tick_params(labelsize=8)
 

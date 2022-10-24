@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 import os
+import random
 import torch
 from torch.utils.data import DataLoader, Dataset, Subset
 import utils.reader as reader
@@ -91,8 +92,10 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
     """
 
     dataset = TrainingDataset(root, elevation_id, azimuth_range, radial_range)
+
     dataset_size = len(dataset)
     indices = list(range(dataset_size))
+    random.shuffle(indices)
 
     train_node = round(train_ratio * dataset_size)
     val_node = round(valid_ratio * dataset_size)

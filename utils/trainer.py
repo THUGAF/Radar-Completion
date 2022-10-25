@@ -210,7 +210,7 @@ class Trainer:
         metrics['PSNR'] = []
         
         print('\n[Test]')
-        self.model.load_state_dict(self.load_checkpoint('bestmodel.pt')['generator'])
+        self.model.load_state_dict(self.load_checkpoint('bestmodel.pt')['model'])
         self.model.eval()
         
         for i, (elevs, tensor) in enumerate(self.test_loader):
@@ -233,11 +233,11 @@ class Trainer:
                 print('Batch: [{}][{}]'.format(i + 1, len(self.test_loader)))
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(tensor, output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor, output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor, output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor, output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor, output))
+            metrics['MAE'].append(evaluation.evaluate_mae(tensor[:, :1], output))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor[:, :1], output))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor[:, :1], output))
+            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor[:, :1], output))
+            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor[:, :1], output))
 
         metrics['MAE'].append(np.mean(metrics['MAE'], axis=0))
         metrics['RMSE'].append(np.mean(metrics['RMSE'], axis=0))
@@ -253,7 +253,7 @@ class Trainer:
         print('Test done.')
 
     @torch.no_grad()
-    def predict(self, generator, sample_loader):
+    def predict(self, model, sample_loader):
         metrics = {}
         metrics['MAE'] = []
         metrics['RMSE'] = []
@@ -262,8 +262,8 @@ class Trainer:
         metrics['PSNR'] = []
         
         print('\n[Predict]')
-        generator.load_state_dict(self.load_checkpoint('bestmodel.pt')['generator'])
-        generator.eval()
+        model.load_state_dict(self.load_checkpoint('bestmodel.pt')['model'])
+        model.eval()
         
         for elevs, tensor in sample_loader:
             tensor = tensor.to(self.args.device)
@@ -273,7 +273,7 @@ class Trainer:
             
             # forward
             input_ = torch.cat([masked_tensor, mask], dim=1)
-            output = self.model(input_)
+            output = model(input_)
             output = masked_tensor[:, :1] + output * (1 - mask[:, :1])
 
             # back scaling
@@ -282,11 +282,11 @@ class Trainer:
             output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(tensor, output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor, output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor, output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor, output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor, output))
+            metrics['MAE'].append(evaluation.evaluate_mae(tensor[:, :1], output))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor[:, :1], output))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor[:, :1], output))
+            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor[:, :1], output))
+            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor[:, :1], output))
 
         metrics['MAE'] = np.mean(metrics['MAE'], axis=0)
         metrics['RMSE'] = np.mean(metrics['RMSE'], axis=0)

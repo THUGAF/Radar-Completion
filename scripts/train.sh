@@ -11,4 +11,4 @@ nohup python -u train.py \
     --num-threads 8 \
     --num-workers 8 \
     --display-interval 50 \
-    > train.log 2>&1 &
+    > results/train.log 2>&1 &

@@ -139,6 +139,6 @@ def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List
         DataLoader: Dataloader for sample.
     """
 
-    sample_set = SampleDataset(root, elevation_id, sample_index, azimuth_range, radial_range)
+    sample_set = SampleDataset(root, sample_index, elevation_id, azimuth_range, radial_range)
     sample_loader = DataLoader(sample_set, batch_size=1)
     return sample_loader

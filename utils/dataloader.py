@@ -1,6 +1,5 @@
 from typing import List, Tuple, Union
 import os
-import random
 import torch
 from torch.utils.data import DataLoader, Dataset, Subset
 import utils.reader as reader
@@ -32,11 +31,12 @@ class TrainingDataset(Dataset):
 
     def __getitem__(self, index):
         filename = self.files[index]
-        elev, ref = reader.read_radar_bin(filename)
+        t, elev, ref = reader.read_radar_bin(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
-        elev, ref = torch.from_numpy(elev).type(torch.FloatTensor), torch.from_numpy(ref).type(torch.FloatTensor)
-        return elev, ref
+        elev = torch.from_numpy(elev).type(torch.FloatTensor)
+        ref = torch.from_numpy(ref).type(torch.FloatTensor)
+        return t, elev, ref
     
     def __len__(self):
         return self.sample_num
@@ -62,11 +62,12 @@ class SampleDataset(TrainingDataset):
         
     def __getitem__(self, index: int):
         filename = self.files[self.sample_index]
-        elev, ref = reader.read_radar_bin(filename)
+        t, elev, ref = reader.read_radar_bin(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
-        elev, ref = torch.from_numpy(elev).type(torch.FloatTensor), torch.from_numpy(ref).type(torch.FloatTensor)
-        return elev, ref
+        elev = torch.from_numpy(elev).type(torch.FloatTensor)
+        ref = torch.from_numpy(ref).type(torch.FloatTensor)
+        return t, elev, ref
 
     def __len__(self):
         return 1

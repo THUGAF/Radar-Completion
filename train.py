@@ -40,7 +40,7 @@ parser.add_argument('--start-iterations', type=int, default=0)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
-parser.add_argument('--random-seed', type=int, default=2022)
+parser.add_argument('--random-seed', type=int, default=100)
 
 
 def main(args):

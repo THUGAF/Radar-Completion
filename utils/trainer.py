@@ -104,18 +104,18 @@ class Trainer:
             # Train
             self.model.train()
 
-            for i, (elevs, tensor) in enumerate(self.train_loader):
+            for i, (t, elev, ref) in enumerate(self.train_loader):
                 # load data
-                tensor = tensor.to(self.args.device)
-                tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
-                masked_tensor, mask, anchor, blockage_len = maskutils.gen_blockage_mask(tensor, 
+                ref = ref.to(self.args.device)
+                ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
+                masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
                     self.args.azimuth_blockage_range, self.args.random_seed + i)
                 
                 # forward
-                input_ = torch.cat([masked_tensor, mask], dim=1)
+                input_ = torch.cat([masked_ref, mask], dim=1)
                 output = self.model(input_)
-                output = masked_tensor[:, :1] + output * (1 - mask[:, :1])
-                loss = losses.biased_mae_loss(output, tensor[:, :1], self.args.vmax, self.args.vmin)
+                output = masked_ref[:, :1] + output * (1 - mask[:, :1])
+                loss = losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
                 
                 # discriminator backward
                 self.optimizer.zero_grad()
@@ -123,8 +123,8 @@ class Trainer:
                 self.optimizer.step()
    
                 # back scaling
-                tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)
-                masked_tensor = scaler.reverse_minmax_norm(masked_tensor, self.args.vmax, self.args.vmin)
+                ref = scaler.reverse_minmax_norm(ref, self.args.vmax, self.args.vmin)
+                masked_ref = scaler.reverse_minmax_norm(masked_ref, self.args.vmax, self.args.vmin)
                 output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
                 train_loss.append(loss.item())
@@ -138,9 +138,9 @@ class Trainer:
             print('Epoch: [{}][{}] Loss: {:.6f}'.format(epoch + 1, self.total_epochs, self.train_loss[-1]))
             
             # Plot tensors
-            tensors = torch.cat([output, tensor], dim=1)
-            visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0], 
-                                    anchor, blockage_len, self.args.output_path, 'train')
+            tensors = torch.cat([output, ref], dim=1)
+            visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0], 
+                                anchor, blockage_len, self.args.output_path, 'train')
             print('Tensors plotted.')
 
             # Validate
@@ -148,22 +148,22 @@ class Trainer:
             self.model.eval()
 
             with torch.no_grad():
-                for i, (elevs, tensor) in enumerate(self.val_loader):
+                for i, (t, elev, ref) in enumerate(self.val_loader):
                     # load data
-                    tensor = tensor.to(self.args.device)
-                    tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
-                    masked_tensor, mask, anchor, blockage_len = maskutils.gen_blockage_mask(tensor,
+                    ref = ref.to(self.args.device)
+                    ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
+                    masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref,
                         self.args.azimuth_blockage_range, self.args.random_seed + i)
 
                     # forward
-                    input_ = torch.cat([masked_tensor, mask], dim=1)
+                    input_ = torch.cat([masked_ref, mask], dim=1)
                     output = self.model(input_)
-                    output = masked_tensor[:, :1] + output * (1 - mask[:, :1])
-                    loss = losses.biased_mae_loss(output, tensor[:, :1], self.args.vmax, self.args.vmin)
+                    output = masked_ref[:, :1] + output * (1 - mask[:, :1])
+                    loss = losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
 
                     # back scaling
-                    tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)
-                    masked_tensor = scaler.reverse_minmax_norm(masked_tensor, self.args.vmax, self.args.vmin)
+                    ref = scaler.reverse_minmax_norm(ref, self.args.vmax, self.args.vmin)
+                    masked_ref = scaler.reverse_minmax_norm(masked_ref, self.args.vmax, self.args.vmin)
                     output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
                     val_loss.append(loss.item())
@@ -177,9 +177,9 @@ class Trainer:
             print('Epoch: [{}][{}] Loss: {:.6f}'.format(epoch + 1, self.total_epochs, self.val_loss[-1]))
             
             # Plot tensors
-            tensors = torch.cat([output, tensor], dim=1)
-            visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
-                                    anchor, blockage_len, self.args.output_path, 'val')
+            tensors = torch.cat([output, ref], dim=1)
+            visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
+                                anchor, blockage_len, self.args.output_path, 'val')
             print('Tensors plotted.')
             
             # Plot loss
@@ -213,31 +213,31 @@ class Trainer:
         self.model.load_state_dict(self.load_checkpoint('bestmodel.pt')['model'])
         self.model.eval()
         
-        for i, (elevs, tensor) in enumerate(self.test_loader):
-            tensor = tensor.to(self.args.device)
-            tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
-            masked_tensor, mask, anchor, blockage_len = maskutils.gen_blockage_mask(tensor, 
+        for i, (t, elev, ref) in enumerate(self.test_loader):
+            ref = ref.to(self.args.device)
+            ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
+            masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
                 self.args.azimuth_blockage_range, self.args.random_seed + i)
             
             # forward
-            input_ = torch.cat([masked_tensor, mask], dim=1)
+            input_ = torch.cat([masked_ref, mask], dim=1)
             output = self.model(input_)
-            output = masked_tensor[:, :1] + output * (1 - mask[:, :1])
+            output = masked_ref[:, :1] + output * (1 - mask[:, :1])
 
             # back scaling
-            tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)
-            masked_tensor = scaler.reverse_minmax_norm(masked_tensor, self.args.vmax, self.args.vmin)
+            ref = scaler.reverse_minmax_norm(ref, self.args.vmax, self.args.vmin)
+            masked_ref = scaler.reverse_minmax_norm(masked_ref, self.args.vmax, self.args.vmin)
             output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
             if (i + 1) % self.args.display_interval == 0:
                 print('Batch: [{}][{}]'.format(i + 1, len(self.test_loader)))
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(tensor[:, :1], output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor[:, :1], output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor[:, :1], output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor[:, :1], output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor[:, :1], output))
+            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output))
+            metrics['SSIM'].append(evaluation.evaluate_ssim(ref[:, :1], output))
+            metrics['PSNR'].append(evaluation.evaluate_psnr(ref[:, :1], output))
 
         metrics['MAE'].append(np.mean(metrics['MAE'], axis=0))
         metrics['RMSE'].append(np.mean(metrics['RMSE'], axis=0))
@@ -247,9 +247,9 @@ class Trainer:
 
         df = pd.DataFrame(data=metrics)
         df.to_csv(os.path.join(self.args.output_path, 'test_metrics.csv'), float_format='%.8f', index=False)
-        tensors = torch.cat([output, tensor], dim=1)
-        visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
-                                anchor, blockage_len, self.args.output_path, 'test')
+        tensors = torch.cat([output, ref], dim=1)
+        visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
+                            anchor, blockage_len, self.args.output_path, 'test')
         print('Test done.')
 
     @torch.no_grad()
@@ -265,28 +265,28 @@ class Trainer:
         model.load_state_dict(self.load_checkpoint('bestmodel.pt')['model'])
         model.eval()
         
-        for elevs, tensor in sample_loader:
-            tensor = tensor.to(self.args.device)
-            tensor = scaler.minmax_norm(tensor, self.args.vmax, self.args.vmin)
-            masked_tensor, mask, anchor, blockage_len = maskutils.gen_blockage_mask(tensor, 
+        for t, elev, ref in sample_loader:
+            ref = ref.to(self.args.device)
+            ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
+            masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
                 self.args.azimuth_blockage_range, self.args.random_seed)
             
             # forward
-            input_ = torch.cat([masked_tensor, mask], dim=1)
+            input_ = torch.cat([masked_ref, mask], dim=1)
             output = model(input_)
-            output = masked_tensor[:, :1] + output * (1 - mask[:, :1])
+            output = masked_ref[:, :1] + output * (1 - mask[:, :1])
 
             # back scaling
-            tensor = scaler.reverse_minmax_norm(tensor, self.args.vmax, self.args.vmin)
-            masked_tensor = scaler.reverse_minmax_norm(masked_tensor, self.args.vmax, self.args.vmin)
+            ref = scaler.reverse_minmax_norm(ref, self.args.vmax, self.args.vmin)
+            masked_ref = scaler.reverse_minmax_norm(masked_ref, self.args.vmax, self.args.vmin)
             output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(tensor[:, :1], output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(tensor[:, :1], output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(tensor[:, :1], output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(tensor[:, :1], output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(tensor[:, :1], output))
+            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output))
+            metrics['SSIM'].append(evaluation.evaluate_ssim(ref[:, :1], output))
+            metrics['PSNR'].append(evaluation.evaluate_psnr(ref[:, :1], output))
 
         metrics['MAE'] = np.mean(metrics['MAE'], axis=0)
         metrics['RMSE'] = np.mean(metrics['RMSE'], axis=0)
@@ -296,9 +296,9 @@ class Trainer:
 
         df = pd.DataFrame(data=metrics, index=['MAE'])
         df.to_csv(os.path.join(self.args.output_path, 'predict_metrics.csv'), float_format='%.8f', index=False)
-        tensors = torch.cat([output, tensor], dim=1)
-        visualizer.plot_tensors(tensors, self.args.azimuth_range[0], self.args.radial_range[0],
-                                anchor, blockage_len, self.args.output_path, 'predict')
+        tensors = torch.cat([output, ref], dim=1)
+        visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
+                            anchor, blockage_len, self.args.output_path, 'predict')
         print('Predict done.')
 
     def save_checkpoint(self, filename='checkpoint.pt'):

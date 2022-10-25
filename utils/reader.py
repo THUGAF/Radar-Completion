@@ -1,5 +1,6 @@
 from typing import Tuple
 import os
+import datetime
 from collections import OrderedDict
 import numpy as np
 
@@ -52,9 +53,13 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
             f.seek(28, 1)
 
             # Basic information
-            f.seek(8, 1)
-            # milliseconds = int.from_bytes(f.read(4), 'little')
-            # days = int.from_bytes(f.read(2), 'little')
+            milliseconds = int.from_bytes(f.read(4), 'little')
+            days = int.from_bytes(f.read(2), 'little')
+            if i == 0:
+                current_datetime = datetime.datetime(1970, 1, 1) + datetime.timedelta(
+                    days=days-1) + datetime.timedelta(milliseconds=milliseconds)
+                current_datetime = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+            f.seek(2, 1)
             # unambiguous_distance = int.from_bytes(f.read(2), 'little') / 10.0
 
             # Crucial information
@@ -121,4 +126,4 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
         elevations = np.array(list(ordered_total_data.keys()))
         reflectivities = np.stack(list(ordered_total_data.values()))
 
-    return elevations, reflectivities
+    return current_datetime, elevations, reflectivities

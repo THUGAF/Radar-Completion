@@ -14,7 +14,3 @@ def gen_blockage_mask(tensor: torch.Tensor, azimuth_blockage_range: List = [5, 1
     masked_tensor = tensor * mask
     return masked_tensor, mask, anchor, blockage_len
     
-
-if __name__ == "__main__":
-    tensor = torch.randn([16, 3, 180, 80])
-    masked_tensor, mask = gen_blockage_mask(tensor, random_seed=1e4)

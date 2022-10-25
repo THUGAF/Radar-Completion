@@ -27,17 +27,17 @@ def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray,
     plt.close(fig)
 
 
-def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_point: float, 
-                 anchor: int, blockage_len: int, root: str, stage: str) -> None:
+def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: float, radial_start_point: float, 
+             anchor: int, blockage_len: int, root: str, stage: str) -> None:
     print('Plotting tensors...')
     
     # save tensor
-    tensor = tensor.detach().cpu()
-    torch.save(tensor, '{}/{}.pt'.format(root, stage))
+    tensors = tensors.detach().cpu()
+    torch.save(tensors, '{}/{}.pt'.format(root, stage))
 
     # plot the long image
-    num_rows, num_cols = tensor.size(0), tensor.size(1)
-    azimuth_size, radial_size = tensor.size(2), tensor.size(3)
+    num_rows, num_cols = tensors.size(0), tensors.size(1)
+    azimuth_size, radial_size = tensors.size(2), tensors.size(3)
     thetas = np.arange(azimuth_start_point, azimuth_start_point + azimuth_size) / 180 * np.pi
     rhos = np.arange(radial_start_point, radial_start_point + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)
@@ -45,7 +45,7 @@ def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_
     for r in range(num_rows):
         for c in range(num_cols):
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
-            pm = ax.pcolormesh(thetas, rhos, tensor[r, c].T, cmap=REF_CMAP, norm=REF_NORM)
+            pm = ax.pcolormesh(thetas, rhos, tensors[r, c].T, cmap=REF_CMAP, norm=REF_NORM)
             if c == 0 or c == 1:
                 ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
                         np.arange(radial_start_point, radial_start_point + radial_size), 
@@ -53,6 +53,8 @@ def plot_tensors(tensor: torch.Tensor, azimuth_start_point: float, radial_start_
                 ax.plot(np.ones(radial_size) * (anchor + blockage_len + azimuth_start_point) / 180 * np.pi,
                         np.arange(radial_start_point, radial_start_point + radial_size), 
                         '--', color='k', linewidth=1)
+            if c == 0:
+                ax.set_title(current_datetime[r], fontsize=10, loc='left', pad=1)
             ax.set_xlim(azimuth_start_point / 180 * np.pi, (azimuth_start_point + azimuth_size) / 180 * np.pi)
             ax.set_rlim(radial_start_point, radial_start_point + radial_size)
             ax.set_theta_zero_location('N')

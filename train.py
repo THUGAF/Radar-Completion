@@ -14,8 +14,8 @@ parser = argparse.ArgumentParser()
 # input and output settings
 parser.add_argument('--data-path', type=str, default='/data/gaf/SBandBasicUnzip')
 parser.add_argument('--output-path', type=str, default='results')
-parser.add_argument('--elevation-id', type=int, nargs='+', default=[0, 1, 2, 3])
-parser.add_argument('--azimuth-range', type=int, nargs='+', default=[45, 225])
+parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2, 3])
+parser.add_argument('--azimuth-range', type=int, nargs='+', default=[0, 360])
 parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 
 # data loading settings
@@ -26,7 +26,7 @@ parser.add_argument('--vmax', type=float, default=70.0)
 parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
-parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[5, 10])
+parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 15])
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')
@@ -54,7 +54,7 @@ def main(args):
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
-    model = CompletionNetwork().to(args.device)
+    model = CompletionNetwork(len(args.elevation_id) * 2).to(args.device)
 
     # Load data
     if args.train or args.test:

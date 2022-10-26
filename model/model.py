@@ -21,10 +21,10 @@ class Concatenate(nn.Module):
 
 
 class CompletionNetwork(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, input_dim) -> None:
         super().__init__()
-        # input_shape: (None, 8, img_h, img_w)
-        self.conv1 = nn.Conv2d(8, 64, kernel_size=3, stride=1, padding=1)
+        # input_shape: (None, input_dim, img_h, img_w)
+        self.conv1 = nn.Conv2d(input_dim, 64, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(64)
         self.act1 = nn.ReLU()
         # input_shape: (None, 64, img_h, img_w)

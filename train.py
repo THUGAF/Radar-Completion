@@ -27,6 +27,8 @@ parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 15])
+parser.add_argument('--sample-anchor', type=int, default=25)
+parser.add_argument('--sample-blockage-len', type=int, default=15)
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')
@@ -40,7 +42,7 @@ parser.add_argument('--start-iterations', type=int, default=0)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
-parser.add_argument('--random-seed', type=int, default=100)
+parser.add_argument('--random-seed', type=int, default=2023)
 
 
 def main(args):

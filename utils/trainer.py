@@ -108,7 +108,7 @@ class Trainer:
                 # load data
                 ref = ref.to(self.args.device)
                 ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
-                masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
+                masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(ref, 
                     self.args.azimuth_blockage_range, self.args.random_seed + i)
                 
                 # forward
@@ -152,7 +152,7 @@ class Trainer:
                     # load data
                     ref = ref.to(self.args.device)
                     ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
-                    masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref,
+                    masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(ref,
                         self.args.azimuth_blockage_range, self.args.random_seed + i)
 
                     # forward
@@ -216,7 +216,7 @@ class Trainer:
         for i, (t, elev, ref) in enumerate(self.test_loader):
             ref = ref.to(self.args.device)
             ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
-            masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
+            masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(ref, 
                 self.args.azimuth_blockage_range, self.args.random_seed + i)
             
             # forward
@@ -268,8 +268,8 @@ class Trainer:
         for t, elev, ref in sample_loader:
             ref = ref.to(self.args.device)
             ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
-            masked_ref, mask, anchor, blockage_len = maskutils.gen_blockage_mask(ref, 
-                self.args.azimuth_blockage_range, self.args.random_seed)
+            masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(ref, 
+                self.args.sample_anchor, self.args.sample_blockage_len)
             
             # forward
             input_ = torch.cat([masked_ref, mask], dim=1)

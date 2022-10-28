@@ -1,14 +1,11 @@
-CUDA_VISIBLE_DEVICES=3 \
-nohup python -u train.py \
+nohup python -u baseline.py \
     --data-path /data/gaf/SBandBasicUnzip \
-    --output-path results/CNN \
-    --train \
+    --output-path results/Baseline \
     --test \
     --predict \
     --sample-index 15441 \
-    --early-stopping \
     --batch-size 16 \
     --num-threads 8 \
     --num-workers 8 \
     --display-interval 50 \
-    > results/train.log 2>&1 &
+    > results/baseline.log 2>&1 &

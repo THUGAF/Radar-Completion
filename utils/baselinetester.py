@@ -19,8 +19,6 @@ class BaselineTester:
         metrics['MAE'] = []
         metrics['RMSE'] = []
         metrics['COSSIM'] = []
-        metrics['SSIM'] = []
-        metrics['PSNR'] = []
         
         print('\n[Test]')
         for i, (t, elev, ref) in enumerate(test_loader):
@@ -39,17 +37,13 @@ class BaselineTester:
                 print('Batch: [{}][{}]'.format(i + 1, len(test_loader)))
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(ref[:, :1], output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(ref[:, :1], output))
+            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1]))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1]))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1]))
 
         metrics['MAE'].append(np.mean(metrics['MAE'], axis=0))
         metrics['RMSE'].append(np.mean(metrics['RMSE'], axis=0))
         metrics['COSSIM'].append(np.mean(metrics['COSSIM'], axis=0))
-        metrics['SSIM'].append(np.mean(metrics['SSIM'], axis=0))
-        metrics['PSNR'].append(np.mean(metrics['PSNR'], axis=0))
 
         df = pd.DataFrame(data=metrics)
         df.to_csv(os.path.join(self.args.output_path, 'test_metrics.csv'), float_format='%.8f', index=False)
@@ -64,8 +58,6 @@ class BaselineTester:
         metrics['MAE'] = []
         metrics['RMSE'] = []
         metrics['COSSIM'] = []
-        metrics['SSIM'] = []
-        metrics['PSNR'] = []
 
         print('\n[Predict]')
         for t, elev, ref in sample_loader:
@@ -81,17 +73,13 @@ class BaselineTester:
             output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output))
-            metrics['SSIM'].append(evaluation.evaluate_ssim(ref[:, :1], output))
-            metrics['PSNR'].append(evaluation.evaluate_psnr(ref[:, :1], output))
+            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1]))
+            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1]))
+            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1]))
 
         metrics['MAE'] = np.mean(metrics['MAE'], axis=0)
         metrics['RMSE'] = np.mean(metrics['RMSE'], axis=0)
         metrics['COSSIM'] = np.mean(metrics['COSSIM'], axis=0)
-        metrics['SSIM'] = np.mean(metrics['SSIM'], axis=0)
-        metrics['PSNR'] = np.mean(metrics['PSNR'], axis=0)
 
         df = pd.DataFrame(data=metrics, index=['MAE'])
         df.to_csv(os.path.join(self.args.output_path, 'predict_metrics.csv'), float_format='%.8f', index=False)

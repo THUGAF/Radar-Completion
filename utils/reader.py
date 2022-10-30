@@ -10,6 +10,7 @@ MAX_NUM_REF_RANGE_BIN = 460
 MAX_NUM_DOP_RANGE_BIN = 920
 DEFAULT_REF = -33.0
 DEFAULT_DOP = -64.5
+SEEK_CUR = 1
 
 
 def elevation_mapping(elevation: float) -> float:
@@ -50,7 +51,7 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
         
         for i in range(num_scans):
             # Header
-            f.seek(28, 1)
+            f.seek(28, SEEK_CUR)
 
             # Basic information
             milliseconds = int.from_bytes(f.read(4), 'little')
@@ -59,7 +60,7 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
                 current_datetime = datetime.datetime(1970, 1, 1) + datetime.timedelta(
                     days=days-1) + datetime.timedelta(milliseconds=milliseconds)
                 current_datetime = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-            f.seek(2, 1)
+            f.seek(2, SEEK_CUR)
             # unambiguous_distance = int.from_bytes(f.read(2), 'little') / 10.0
 
             # Crucial information
@@ -70,30 +71,31 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
             elevation = int.from_bytes(f.read(2), 'little') / 8.0 * 180.0 / 4096.0
             elevation = elevation_mapping(elevation)
             num_elevations = int.from_bytes(f.read(2), 'little')
-            f.seek(8, 1)
+            f.seek(8, SEEK_CUR)
             # ref_1st_range_bin = int.from_bytes(f.read(2), 'little')
             # dop_1st_range_bin = int.from_bytes(f.read(2), 'little')
             # ref_range_bin_distance = int.from_bytes(f.read(2), 'little')
             # dop_range_bin_distance = int.from_bytes(f.read(2), 'little')
             num_ref_range_bin = int.from_bytes(f.read(2), 'little')
             num_dop_range_bin = int.from_bytes(f.read(2), 'little')
-            f.seek(4, 1)
+            f.seek(4, SEEK_CUR)
             # num_sector = int.from_bytes(f.read(2), 'little')
             # correction_coefficient = int.from_bytes(f.read(4), 'little')
-            f.seek(6, 1)
+            f.seek(6, SEEK_CUR)
             # ref_pointer = int.from_bytes(f.read(2), 'little')
             # dop_pointer = int.from_bytes(f.read(2), 'little')
             # width_pointer = int.from_bytes(f.read(2), 'little')
-            f.seek(4, 1)
+            f.seek(4, SEEK_CUR)
             # dop_speed_res = int.from_bytes(f.read(2), 'little') / 4.0
             # vcp_mode = int.from_bytes(f.read(2), 'little')
-            f.seek(8, 1)
-            f.seek(6, 1)
+            f.seek(8, SEEK_CUR)
+            f.seek(6, SEEK_CUR)
             # ref_rev_pointer = int.from_bytes(f.read(2), 'little')
             # dop_rev_pointer = int.from_bytes(f.read(2), 'little')
             # width_rev_pointer = int.from_bytes(f.read(2), 'little')
-            nyquist_speed = int.from_bytes(f.read(2), 'little') / 100.0
-            f.seek(38, 1)
+            f.seek(2, SEEK_CUR)
+            # nyquist_speed = int.from_bytes(f.read(2), 'little') / 100.0
+            f.seek(38, SEEK_CUR)
 
             if radial_order == 1:
                 if not elevation in total_data.keys():
@@ -110,14 +112,14 @@ def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
                 total_data[elevation][azimuth] = refs
             
             # Doppler speed
-            f.seek(num_dop_range_bin, 1)
+            f.seek(num_dop_range_bin, SEEK_CUR)
             
             # Spectrual width
-            f.seek(num_dop_range_bin, 1)
+            f.seek(num_dop_range_bin, SEEK_CUR)
             
             # Tail
             pointer = f.tell()
-            f.seek(2432 * (i + 1) - pointer, 1)
+            f.seek(2432 * (i + 1) - pointer, SEEK_CUR)
 
         ordered_total_data = {}
         for e in total_data.keys():

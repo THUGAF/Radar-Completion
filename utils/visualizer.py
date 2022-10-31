@@ -15,8 +15,7 @@ REF_NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), REF_CMAP.N)
 plt.rcParams['font.sans-serif'] = 'Arial'
 
 
-def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, 
-              output_path: str, filename: str = 'loss.png') -> None:
+def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, output_path: str, filename: str = 'loss.png'):
     fig = plt.figure(figsize=(6, 4), dpi=600)
     ax = plt.subplot(111)
     ax.plot(range(1, len(train_loss) + 1), train_loss, 'b')
@@ -28,7 +27,7 @@ def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray,
 
 
 def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: float, radial_start_point: float, 
-             anchor: int, blockage_len: int, root: str, stage: str) -> None:
+             anchor: int, blockage_len: int, root: str, stage: str):
     print('Plotting tensors...')
     
     # save tensor

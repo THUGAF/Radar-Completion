@@ -3,25 +3,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+# refers to https://github.com/otenim/GLCIC-PyTorch
+
 class Flatten(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self):
         super(Flatten, self).__init__()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         return x.view(x.shape[0], -1)
 
 
 class Concatenate(nn.Module):
-    def __init__(self, dim=-1) -> None:
+    def __init__(self, dim=-1):
         super(Concatenate, self).__init__()
         self.dim = dim
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         return torch.cat(x, dim=self.dim)
 
 
 class CompletionNetwork(nn.Module):
-    def __init__(self, input_dim) -> None:
+    def __init__(self, input_dim):
         super().__init__()
         # input_shape: (None, input_dim, img_h, img_w)
         self.conv1 = nn.Conv2d(input_dim, 64, kernel_size=3, stride=1, padding=1)
@@ -92,7 +94,7 @@ class CompletionNetwork(nn.Module):
         self.act17 = nn.Sigmoid()
         # output_shape: (None, 1, img_h, img_w)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         x = self.bn1(self.act1(self.conv1(x)))
         x = self.bn2(self.act2(self.conv2(x)))
         x = self.bn3(self.act3(self.conv3(x)))

@@ -1,9 +1,8 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
 
 
-def evaluate_mae(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor):
+def evaluate_mae(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
     mask = torch.logical_not(mask.bool())
@@ -11,7 +10,7 @@ def evaluate_mae(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor):
     return mae
 
 
-def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor):
+def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
     mask = torch.logical_not(mask.bool())
@@ -19,7 +18,7 @@ def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor):
     return rmse
 
 
-def evaluate_cossim(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor):
+def evaluate_cossim(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
     mask = torch.logical_not(mask.bool())

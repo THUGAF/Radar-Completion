@@ -42,7 +42,7 @@ def azimuth_mapping(azimuth: float) -> float:
     return azimuth
 
 
-def read_radar_bin(path: str) -> Tuple[np.ndarray, np.ndarray]:
+def read_radar_bin(path: str) -> Tuple[str, np.ndarray, np.ndarray]:
     size = os.path.getsize(path)
     num_scans = size // 2432
     

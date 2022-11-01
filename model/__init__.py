@@ -1,1 +1,1 @@
-from .model import CompletionNetwork
+from .model import GLCIC, UNet

@@ -30,6 +30,9 @@ parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10
 parser.add_argument('--sample-anchor', type=int, default=25)
 parser.add_argument('--sample-blockage-len', type=int, default=15)
 
+# model settings
+parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet'], default='GLCIC')
+
 # training settings
 parser.add_argument('--pretrain', action='store_true')
 parser.add_argument('--train', action='store_true')
@@ -56,7 +59,12 @@ def main(args):
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
-    model = CompletionNetwork(len(args.elevation_id) * 2).to(args.device)
+    in_channels = len(args.elevation_id) * 2
+    if args.model == 'GLCIC':
+        model = GLCIC(in_channels)
+    elif args.model == 'UNet':
+        model = UNet(in_channels)
+    model = model.to(args.device)
 
     # Load data
     if args.train or args.test:

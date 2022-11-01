@@ -1,7 +1,8 @@
-CUDA_VISIBLE_DEVICES=3 \
+CUDA_VISIBLE_DEVICES=0 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandBasicUnzip \
-    --output-path results/CNN \
+    --output-path results/UNet \
+    --train \
     --test \
     --predict \
     --sample-index 15441 \

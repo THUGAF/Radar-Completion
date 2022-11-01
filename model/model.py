@@ -5,24 +5,6 @@ from .layers import *
 
 
 # refers to https://github.com/otenim/GLCIC-PyTorch
-
-class Flatten(nn.Module):
-    def __init__(self):
-        super(Flatten, self).__init__()
-
-    def forward(self, x):
-        return x.view(x.shape[0], -1)
-
-
-class Concatenate(nn.Module):
-    def __init__(self, dim=-1):
-        super(Concatenate, self).__init__()
-        self.dim = dim
-
-    def forward(self, x):
-        return torch.cat(x, dim=self.dim)
-
-
 class GLCIC(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
@@ -121,30 +103,33 @@ class UNet(nn.Module):
         super().__init__()
         # Downscaling
         self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
-        self.down1 = Down(32, 64)
-        self.down2 = Down(64, 128)
-        self.down3 = Down(128, 256)
-        self.down4 = Down(256, 256)
+        self.downscaler = nn.MaxPool2d(2, 2)
+        self.down1 = DoubleConv2d(32, 64)
+        self.down1 = DoubleConv2d(32, 64)
+        self.down2 = DoubleConv2d(64, 128)
+        self.down3 = DoubleConv2d(128, 256)
+        self.down4 = DoubleConv2d(256, 256)
         # Upscaling
-        self.up4 = Up(512, 128)
-        self.up3 = Up(256, 64)
-        self.up2 = Up(128, 32)
-        self.up1 = Up(64, 32)
+        self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
+        self.up4 = DoubleConv2d(512, 128)
+        self.up3 = DoubleConv2d(256, 64)
+        self.up2 = DoubleConv2d(128, 32)
+        self.up1 = DoubleConv2d(64, 32)
         self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
         self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Downscaling
         h1 = self.in_conv(x)
-        h2 = self.down1(h1)
-        h3 = self.down2(h2)
-        h4 = self.down3(h3)
-        h_last = self.down4(h4)
+        h2 = self.down1(self.downscaler(h1))
+        h3 = self.down2(self.downscaler(h2))
+        h4 = self.down3(self.downscaler(h3))
+        h_last = self.down4(self.downscaler(h4))
         # Upscaling
-        h4p = self.up4(h_last, h4)
-        h3p = self.up3(h4p, h3)
-        h2p = self.up2(h3p, h2)
-        h1p = self.up1(h2p, h1)
+        h4p = self.up4(self.upscaler(torch.cat([h_last, h4], dim=1)))
+        h3p = self.up3(self.upscaler(torch.cat([h4p, h3], dim=1)))
+        h2p = self.up2(self.upscaler(torch.cat([h3p, h2], dim=1)))
+        h1p = self.up1(self.upscaler(torch.cat([h2p, h1], dim=1)))
         out = self.out_conv(h1p)
         out = self.relu(out)
         return out

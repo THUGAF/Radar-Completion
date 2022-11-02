@@ -85,18 +85,21 @@ class Trainer:
         if self.args.pretrain:
             states = self.load_checkpoint()
             self.model.load_state_dict(states['model'])
-            self.optimizer.load_state_dict(states['optimizer_g'])
+            self.optimizer.load_state_dict(states['optimizer'])
             self.current_iterations = states['iteration']
             self.train_loss = states['train_loss']
             self.val_loss = states['val_loss']
+            start_epoch = int(math.floor(self.current_iterations / len(self.train_loader)))
         else:
             self.current_iterations = 0
             self.train_loss = []
             self.val_loss = []
+            start_epoch = 0
+        
         early_stopping = EarlyStopping(verbose=True, path='bestmodel.pt')
 
         # Train
-        for epoch in range(self.total_epochs):
+        for epoch in range(start_epoch, self.total_epochs):
             print('\n[Train]')
             print('Epoch: [{}][{}]'.format(epoch + 1, self.total_epochs))
             train_loss = []
@@ -106,6 +109,12 @@ class Trainer:
             self.model.train()
 
             for i, (t, elev, ref) in enumerate(self.train_loader):
+                # Check max iterations
+                self.current_iterations += 1
+                if self.current_iterations > self.args.max_iterations:
+                    print('Max interations %d reached.' % self.args.max_iterations)
+                    break
+
                 # load data
                 ref = ref.to(self.args.device)
                 ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
@@ -193,12 +202,6 @@ class Trainer:
             if self.args.early_stopping:
                 early_stopping(self.val_loss[-1], self)
             if early_stopping.early_stop:
-                break
-            
-            # Check max iterations
-            self.current_iterations += 1
-            if self.current_iterations == self.args.max_iterations:
-                print('Max interations %d reached.' % self.args.max_iterations)
                 break
     
     @torch.no_grad()

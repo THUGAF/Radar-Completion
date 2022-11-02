@@ -9,7 +9,7 @@ class GLCIC(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
         # input_shape: (None, input_dim, img_h, img_w)
-        self.conv1 = nn.Conv2d(input_dim, 64, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(input_dim, 64, kernel_size=5, stride=1, padding=2)
         self.bn1 = nn.BatchNorm2d(64)
         self.act1 = nn.ReLU()
         # input_shape: (None, 64, img_h, img_w)

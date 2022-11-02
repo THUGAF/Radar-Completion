@@ -1,8 +1,9 @@
 from typing import Tuple
+from collections import OrderedDict
 import os
 import datetime
-from collections import OrderedDict
 import numpy as np
+import torch
 
 
 AZIMUTH_RANGE = 360
@@ -129,3 +130,26 @@ def read_radar_bin(path: str) -> Tuple[str, np.ndarray, np.ndarray]:
         reflectivities = np.stack(list(ordered_total_data.values()))
 
     return current_datetime, elevations, reflectivities
+
+
+def save_pt(source_root: str, target_root: str):
+    if not os.path.exists(target_root):
+        os.mkdir(target_root)
+    date_list = sorted(os.listdir(source_root))
+    for date in date_list:
+        if not os.path.exists(os.path.join(target_root, date)):
+            os.mkdir(os.path.join(target_root, date))
+        file_list = sorted(os.listdir(os.path.join(source_root, date)))
+        for file_ in file_list:
+            source_file_path = os.path.join(source_root, date, file_)
+            target_file_path = os.path.join(target_root, date, file_.replace('.bin', '.pt'))
+            t, elev, ref = read_radar_bin(source_file_path)
+            elev = torch.from_numpy(elev).type(torch.FloatTensor)
+            ref = torch.from_numpy(ref).type(torch.FloatTensor)
+            torch.save((t, elev, ref), target_file_path)
+            print(target_file_path)
+
+
+# if __name__ == '__main__':
+#     save_pt('/data/gaf/SBandBasicUnzip', '/data/gaf/SBandBasicPt')
+    

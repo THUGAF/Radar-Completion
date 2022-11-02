@@ -1,7 +1,7 @@
 CUDA_VISIBLE_DEVICES=0 \
 nohup python -u train.py \
-    --data-path /data/gaf/SBandBasicUnzip \
-    --output-path results/UNet \
+    --data-path /data/gaf/SBandBasicPt \
+    --output-path results/GLCIC \
     --train \
     --test \
     --predict \

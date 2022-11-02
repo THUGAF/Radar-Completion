@@ -2,7 +2,6 @@ from typing import List, Tuple, Union
 import os
 import torch
 from torch.utils.data import DataLoader, Dataset, Subset
-import utils.reader as reader
 
 
 class TrainingDataset(Dataset):
@@ -31,11 +30,9 @@ class TrainingDataset(Dataset):
 
     def __getitem__(self, index):
         filename = self.files[index]
-        t, elev, ref = reader.read_radar_bin(filename)
+        t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
-        elev = torch.from_numpy(elev).type(torch.FloatTensor)
-        ref = torch.from_numpy(ref).type(torch.FloatTensor)
         return t, elev, ref
     
     def __len__(self):
@@ -53,7 +50,8 @@ class SampleDataset(TrainingDataset):
         radial_range (List[int]): Range of radial distance. 
     """
 
-    def __init__(self, root: str, sample_index: int, elevation_id: Union[int, List[int]], azimuth_range: List[int], radial_range: List[int]):
+    def __init__(self, root: str, sample_index: int, elevation_id: Union[int, List[int]], 
+                 azimuth_range: List[int], radial_range: List[int]):
         super().__init__(root, elevation_id, azimuth_range, radial_range)
         self.sample_index = sample_index
         self.elevation_id = elevation_id
@@ -62,11 +60,9 @@ class SampleDataset(TrainingDataset):
         
     def __getitem__(self, index: int):
         filename = self.files[self.sample_index]
-        t, elev, ref = reader.read_radar_bin(filename)
+        t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
-        elev = torch.from_numpy(elev).type(torch.FloatTensor)
-        ref = torch.from_numpy(ref).type(torch.FloatTensor)
         return t, elev, ref
 
     def __len__(self):
@@ -74,8 +70,8 @@ class SampleDataset(TrainingDataset):
 
 
 def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, valid_ratio: float, 
-              elevation_id: Union[int, List[int]] = 0, azimuth_range: List[int] = [0, 360], radial_range: List[int] = [0, 460]) \
-              -> Tuple[DataLoader, DataLoader, DataLoader]:
+              elevation_id: Union[int, List[int]] = 0, azimuth_range: List[int] = [0, 360], 
+              radial_range: List[int] = [0, 460]) -> Tuple[DataLoader, DataLoader, DataLoader]:
     r"""Load training and test data.
 
     Args:
@@ -125,8 +121,8 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
     return train_loader, val_loader, test_loader
 
 
-def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List[int]] = 0, azimuth_range: List[int] = [0, 360], 
-                radial_range: List[int] = [0, 460]) -> DataLoader:
+def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List[int]] = 0, 
+                azimuth_range: List[int] = [0, 360], radial_range: List[int] = [0, 460]) -> DataLoader:
     r"""Load sample data.
 
     Args:
@@ -143,3 +139,9 @@ def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List
     sample_set = SampleDataset(root, sample_index, elevation_id, azimuth_range, radial_range)
     sample_loader = DataLoader(sample_set, batch_size=1)
     return sample_loader
+
+
+# if __name__ == '__main__':
+#     sample_loader = load_sample('/data/gaf/SBandBasicPt', elevation_id=[1, 2, 3])
+#     for t, elev, ref in sample_loader:
+#         print(t, elev.size(), ref.size())

@@ -1,5 +1,5 @@
 nohup python -u baseline.py \
-    --data-path /data/gaf/SBandBasicUnzip \
+    --data-path /data/gaf/SBandBasicPt \
     --output-path results/Baseline \
     --test \
     --predict \

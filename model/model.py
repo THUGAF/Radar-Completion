@@ -102,21 +102,20 @@ class UNet(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         # Downscaling
-        self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
+        self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
         self.downscaler = nn.MaxPool2d(2, 2)
-        self.down1 = DoubleConv2d(32, 64)
-        self.down1 = DoubleConv2d(32, 64)
-        self.down2 = DoubleConv2d(64, 128)
-        self.down3 = DoubleConv2d(128, 256)
-        self.down4 = DoubleConv2d(256, 256)
+        self.down1 = DoubleConv2d(64, 128)
+        self.down2 = DoubleConv2d(128, 256)
+        self.down3 = DoubleConv2d(256, 256)
         # Upscaling
         self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.up4 = DoubleConv2d(512, 128)
-        self.up3 = DoubleConv2d(256, 64)
-        self.up2 = DoubleConv2d(128, 32)
-        self.up1 = DoubleConv2d(64, 32)
-        self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
-        self.relu = nn.ReLU()
+        self.up3 = DoubleConv2d(512, 128)
+        # self.self_attention2 = SelfAttention(128)
+        self.up2 = DoubleConv2d(256, 64)
+        # self.self_attention1 = SelfAttention(64)
+        self.up1 = DoubleConv2d(128, 64)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
+        self.act = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Downscaling
@@ -124,12 +123,12 @@ class UNet(nn.Module):
         h2 = self.down1(self.downscaler(h1))
         h3 = self.down2(self.downscaler(h2))
         h4 = self.down3(self.downscaler(h3))
-        h_last = self.down4(self.downscaler(h4))
         # Upscaling
-        h4p = self.up4(self.upscaler(torch.cat([h_last, h4], dim=1)))
-        h3p = self.up3(self.upscaler(torch.cat([h4p, h3], dim=1)))
-        h2p = self.up2(self.upscaler(torch.cat([h3p, h2], dim=1)))
-        h1p = self.up1(self.upscaler(torch.cat([h2p, h1], dim=1)))
+        h3p = self.up3(torch.cat([self.upscaler(h4), h3], dim=1))
+        # h3p = self.self_attention2(h3p)
+        h2p = self.up2(torch.cat([self.upscaler(h3p), h2], dim=1))
+        # h2p = self.self_attention1(h2p)
+        h1p = self.up1(torch.cat([self.upscaler(h2p), h1], dim=1))
         out = self.out_conv(h1p)
-        out = self.relu(out)
+        out = self.act(out)
         return out

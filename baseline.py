@@ -27,7 +27,7 @@ parser.add_argument('--vmax', type=float, default=70.0)
 parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
-parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 15])
+parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 20])
 parser.add_argument('--sample-anchor', type=int, default=25)
 parser.add_argument('--sample-blockage-len', type=int, default=15)
 

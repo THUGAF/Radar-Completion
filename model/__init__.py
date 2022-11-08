@@ -1,1 +1,1 @@
-from .model import GLCIC, UNet
+from .models import GLCIC, UNet

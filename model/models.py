@@ -110,9 +110,9 @@ class UNet(nn.Module):
         # Upscaling
         self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
         self.up3 = DoubleConv2d(512, 128)
-        # self.self_attention2 = SelfAttention(128)
+        self.self_attention2 = SelfAttention(128)
         self.up2 = DoubleConv2d(256, 64)
-        # self.self_attention1 = SelfAttention(64)
+        self.self_attention1 = SelfAttention(64)
         self.up1 = DoubleConv2d(128, 64)
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.act = nn.Sigmoid()
@@ -125,9 +125,9 @@ class UNet(nn.Module):
         h4 = self.down3(self.downscaler(h3))
         # Upscaling
         h3p = self.up3(torch.cat([self.upscaler(h4), h3], dim=1))
-        # h3p = self.self_attention2(h3p)
+        h3p = self.self_attention2(h3p)
         h2p = self.up2(torch.cat([self.upscaler(h3p), h2], dim=1))
-        # h2p = self.self_attention1(h2p)
+        h2p = self.self_attention1(h2p)
         h1p = self.up1(torch.cat([self.upscaler(h2p), h1], dim=1))
         out = self.out_conv(h1p)
         out = self.act(out)

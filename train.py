@@ -3,7 +3,7 @@ import argparse
 import warnings
 import torch
 
-from model import *
+from model.models import *
 from utils.trainer import *
 import utils.dataloader as dataloader
 

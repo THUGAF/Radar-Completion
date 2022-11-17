@@ -98,7 +98,96 @@ class GLCIC(nn.Module):
         return x
 
 
+class DilatedUNet(nn.Module):
+    def __init__(self, in_channels: int):
+        super().__init__()
+        # input_shape: (None, in_channels, img_h, img_w)
+        self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
+        # input_shape: (None, 64, img_h, img_w)
+        self.down1 = DoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        # input_shape: (None, 128, img_h//2, img_w//2)
+        self.down2 = DoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        # input_shape: (None, 256, img_h//4, img_w//4)
+        self.dilated_conv1 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        # input_shape: (None, 256, img_h//4, img_w//4)
+        self.dilated_conv2 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=2, padding=2),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        # input_shape: (None, 256, img_h//4, img_w//4)
+        self.dilated_conv3 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=4, padding=4),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        # input_shape: (None, 256, img_h//4, img_w//4)
+        self.dilated_conv4 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=8, padding=8),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        # input_shape: (None, 256, img_h//4, img_w//4)
+        self.up2 = DoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        # input_shape: (None, 128, img_h//2, img_w//2)
+        self.up1 = DoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        # input_shape: (None, 64, img_h, img_w)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
+        self.act = nn.Sigmoid()
+        # output_shape: (None, 1, img_h, img_w)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.in_conv(x)
+        h1 = self.down1(x)
+        h2 = self.down2(h1)
+        hd = self.dilated_conv1(h2)
+        hd = self.dilated_conv2(hd)
+        hd = self.dilated_conv3(hd)
+        hd = self.dilated_conv4(hd)
+        h2p = self.up2(torch.cat([hd, h2], dim=1))
+        h1p = self.up1(torch.cat([h2p, h1], dim=1))
+        out = self.out_conv(h1p)
+        out = self.act(out)
+        return out
+
+
 class UNet(nn.Module):
+    def __init__(self, in_channels: int):
+        super().__init__()
+        # Downscaling
+        self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
+        self.downscaler = nn.MaxPool2d(2, 2)
+        self.down1 = DoubleConv2d(64, 128)
+        self.down2 = DoubleConv2d(128, 256)
+        self.down3 = DoubleConv2d(256, 256)
+        # Upscaling
+        self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
+        self.up3 = DoubleConv2d(512, 128)
+        self.up2 = DoubleConv2d(256, 64)
+        self.up1 = DoubleConv2d(128, 64)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
+        self.act = nn.Sigmoid()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Downscaling
+        h1 = self.in_conv(x)
+        h2 = self.down1(self.downscaler(h1))
+        h3 = self.down2(self.downscaler(h2))
+        h4 = self.down3(self.downscaler(h3))
+        # Upscaling
+        h3p = self.up3(torch.cat([self.upscaler(h4), h3], dim=1))
+        h2p = self.up2(torch.cat([self.upscaler(h3p), h2], dim=1))
+        h1p = self.up1(torch.cat([self.upscaler(h2p), h1], dim=1))
+        out = self.out_conv(h1p)
+        out = self.act(out)
+        return out
+
+
+class UNet_SA(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         # Downscaling

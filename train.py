@@ -31,7 +31,7 @@ parser.add_argument('--sample-anchor', type=int, default=25)
 parser.add_argument('--sample-blockage-len', type=int, default=15)
 
 # model settings
-parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet'], default='GLCIC')
+parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet', 'UNet_SA', 'DilatedUNet'], default='UNet')
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')
@@ -53,17 +53,13 @@ def main(args):
     torch.manual_seed(args.random_seed)
     torch.cuda.manual_seed(args.random_seed)
     torch.cuda.manual_seed_all(args.random_seed)
-    torch.autograd.set_detect_anomaly(True)
 
     # Set device
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
     in_channels = len(args.elevation_id) * 2
-    if args.model == 'GLCIC':
-        model = GLCIC(in_channels)
-    elif args.model == 'UNet':
-        model = UNet(in_channels)
+    model = eval(args.model)(in_channels)
     model = model.to(args.device)
 
     # Load data

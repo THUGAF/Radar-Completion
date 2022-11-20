@@ -47,6 +47,8 @@ parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
 parser.add_argument('--random-seed', type=int, default=2023)
 
+args = parser.parse_args()
+
 
 def main(args):
     # fix the random seed
@@ -88,5 +90,4 @@ def main(args):
     
 
 if __name__ == '__main__':
-    args = parser.parse_args()
     main(args)

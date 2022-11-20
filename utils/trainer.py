@@ -248,6 +248,8 @@ class Trainer:
         tensors = torch.cat([output, ref], dim=1)
         visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
                             anchor, blockage_len, self.args.output_path, 'test')
+        visualizer.plot_psd(tensors, self.args.radial_range[0], anchor, blockage_len,
+                            self.args.output_path, 'test')
         print('Test done.')
 
     @torch.no_grad()
@@ -291,6 +293,8 @@ class Trainer:
         tensors = torch.cat([output, ref], dim=1)
         visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
                             anchor, blockage_len, self.args.output_path, 'predict')
+        visualizer.plot_psd(tensors, self.args.radial_range[0], anchor, blockage_len,
+                            self.args.output_path, 'predict')
         print('Predict done.')
 
     def save_checkpoint(self, filename='checkpoint.pt'):

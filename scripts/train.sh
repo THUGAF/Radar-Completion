@@ -2,7 +2,6 @@ CUDA_VISIBLE_DEVICES=1 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandBasicPt \
     --output-path results/DilatedUNet \
-    --train \
     --test \
     --predict \
     --model DilatedUNet \

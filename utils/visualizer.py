@@ -2,6 +2,7 @@ import os
 import torch
 import numpy as np
 import scipy.signal
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as pcolors
 
@@ -95,6 +96,23 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     truth_azimuthal_freq, truth_azimuthal_psd = scipy.signal.welch(truth, nperseg=truth.shape[0], axis=0)
     truth_azimuthal_freq, truth_azimuthal_mean_psd = truth_azimuthal_freq[1:], np.mean(truth_azimuthal_psd, axis=1)[1:]
     truth_azimuthal_wavelength = 1 / truth_azimuthal_freq
+
+    radial_data = {
+        'pred_radial_wavelength': pred_radial_wavelength,
+        'pred_radial_mean_psd': pred_radial_mean_psd,
+        'truth_radial_wavelength': truth_radial_wavelength,
+        'truth_radial_mean_psd': truth_radial_mean_psd,
+    }
+    azimuthal_data = {
+        'pred_azimuthal_wavelength': pred_azimuthal_wavelength,
+        'pred_azimuthal_mean_psd': pred_azimuthal_mean_psd,
+        'truth_azimuthal_wavelength': truth_azimuthal_wavelength,
+        'truth_azimuthal_mean_psd': truth_azimuthal_mean_psd
+    }
+    radial_df = pd.DataFrame(radial_data)
+    azimuthal_df = pd.DataFrame(azimuthal_data)
+    radial_df.to_csv('{}/{}_radial_psd.csv'.format(root, stage), float_format='%.8f', index=False)   
+    azimuthal_df.to_csv('{}/{}_aimuthal_psd.csv'.format(root, stage), float_format='%.8f', index=False)
 
     fig = plt.figure(figsize=(15, 5), dpi=600)
     ax1 = fig.add_subplot(1, 2, 1)

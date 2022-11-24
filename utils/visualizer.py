@@ -60,7 +60,6 @@ def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
             ax.set_rlim(radial_start_point, radial_start_point + radial_size)
             ax.set_theta_zero_location('N')
             ax.set_theta_direction('clockwise')
-            # ax.set_theta_offset((azimuth_start_point + 180) / 180 * np.pi)
             ax.grid(True, linewidth=1)
             ax.tick_params(labelsize=10)
 
@@ -111,8 +110,8 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     }
     radial_df = pd.DataFrame(radial_data)
     azimuthal_df = pd.DataFrame(azimuthal_data)
-    radial_df.to_csv('{}/{}_radial_psd.csv'.format(root, stage), float_format='%.8f', index=False)   
-    azimuthal_df.to_csv('{}/{}_aimuthal_psd.csv'.format(root, stage), float_format='%.8f', index=False)
+    radial_df.to_csv('{}/{}_radial_psd.csv'.format(root, stage), float_format='%.8f', index=False)
+    azimuthal_df.to_csv('{}/{}_azimuthal_psd.csv'.format(root, stage), float_format='%.8f', index=False)
 
     fig = plt.figure(figsize=(15, 5), dpi=600)
     ax1 = fig.add_subplot(1, 2, 1)

@@ -1,7 +1,7 @@
 CUDA_VISIBLE_DEVICES=2 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandBasicPt \
-    --output-path results/DialatedUNet \
+    --output-path results/DilatedUNet \
     --train \
     --test \
     --predict \
@@ -12,4 +12,4 @@ nohup python -u train.py \
     --num-threads 8 \
     --num-workers 8 \
     --display-interval 50 \
-    > results/DialatedUNet.log 2>&1 &
+    > results/DilatedUNet.log 2>&1 &

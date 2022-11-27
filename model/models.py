@@ -166,7 +166,7 @@ class UNet_SA(nn.Module):
         return out
 
 
-class DialatedUNet(nn.Module):
+class DilatedUNet(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
@@ -216,7 +216,7 @@ class DialatedUNet(nn.Module):
         return out
 
 
-class DialatedUNet_SA(nn.Module):
+class DilatedUNet_SA(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)

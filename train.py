@@ -31,7 +31,7 @@ parser.add_argument('--sample-anchor', type=int, default=25)
 parser.add_argument('--sample-blockage-len', type=int, default=15)
 
 # model settings
-parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet', 'UNet_SA', 'DialatedUNet', 'DialatedUNet_SA'], default='UNet')
+parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet', 'UNet_SA', 'DilatedUNet', 'DilatedUNet_SA'], default='UNet')
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')

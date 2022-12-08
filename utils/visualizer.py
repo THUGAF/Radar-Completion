@@ -122,7 +122,7 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     ax1.invert_xaxis()
     ax1.set_xlabel('Wave length (km)', fontsize=12)
     ax1.set_ylabel('Radial Power Spectral Density', fontsize=12)
-    ax1.legend(['Prediction', 'Groud truth'])
+    ax1.legend(['Prediction', 'Observation'])
 
     ax2 = fig.add_subplot(1, 2, 2)
     ax2.plot(pred_azimuthal_wavelength, pred_azimuthal_mean_psd, color='b')
@@ -132,7 +132,7 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     ax2.invert_xaxis()
     ax2.set_xlabel('Wave length (deg)', fontsize=12)
     ax2.set_ylabel('Azimuthal Power Spectral Density', fontsize=12)
-    ax2.legend(['Prediction', 'Groud truth'])
+    ax2.legend(['Prediction', 'Observation'])
 
     fig.savefig('{}/{}_psd.png'.format(root, stage), bbox_inches='tight')
     plt.close(fig)

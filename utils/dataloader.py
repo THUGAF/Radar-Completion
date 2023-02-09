@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union
 import os
 import torch
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import DataLoader, Dataset, Subset, random_split
 
 
 class TrainingDataset(Dataset):
@@ -59,7 +59,7 @@ class SampleDataset(TrainingDataset):
         self.radial_range = radial_range
         
     def __getitem__(self, index: int):
-        filename = self.files[self.sample_index]
+        filename = self.files[self.sample_index[index]]
         t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
@@ -92,17 +92,15 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
 
     dataset_size = len(dataset)
     indices = list(range(dataset_size))
-
     train_node = round(train_ratio * dataset_size)
     val_node = round(valid_ratio * dataset_size)
-    train_indices = indices[:train_node]
-    val_indices = indices[train_node: train_node + val_node]
+    train_val_indices = indices[:train_node + val_node]
     test_indices = indices[train_node + val_node:]
-
-    train_set = Subset(dataset, train_indices)
-    val_set = Subset(dataset, val_indices)
+    
+    train_val_set = Subset(dataset, train_val_indices)
+    train_set, val_set = random_split(train_val_set, lengths=[train_node, len(train_val_set) - train_node])
     test_set = Subset(dataset, test_indices)
-
+    
     train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers,
                               shuffle=True, drop_last=True, pin_memory=True)
     val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers,

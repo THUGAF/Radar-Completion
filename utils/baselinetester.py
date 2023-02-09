@@ -50,19 +50,13 @@ class BaselineTester:
         tensors = torch.cat([output, ref], dim=1)
         visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
                             anchor, blockage_len, self.args.output_path, 'test')
-        visualizer.plot_psd(tensors, self.args.radial_range[0], anchor, blockage_len,
-                            self.args.output_path, 'test')
         print('Test done.')
     
     @torch.no_grad()
     def predict(self, sample_loader):
-        metrics = {}
-        metrics['MAE'] = []
-        metrics['RMSE'] = []
-        metrics['COSSIM'] = []
-
         print('\n[Predict]')
-        for t, elev, ref in sample_loader:
+        for i, (t, elev, ref) in enumerate(sample_loader):
+            metrics = {}
             ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
             masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
                 ref, self.args.azimuth_range[0], self.args.sample_anchor, self.args.sample_blockage_len)
@@ -75,19 +69,21 @@ class BaselineTester:
             output = scaler.reverse_minmax_norm(output, self.args.vmax, self.args.vmin)
 
             # evaluation
-            metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1]))
-            metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1]))
-            metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1]))
+            metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
+            metrics['RMSE'] = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+            metrics['COSSIM'] = evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
 
-        metrics['MAE'] = np.mean(metrics['MAE'], axis=0)
-        metrics['RMSE'] = np.mean(metrics['RMSE'], axis=0)
-        metrics['COSSIM'] = np.mean(metrics['COSSIM'], axis=0)
+            df = pd.DataFrame(data=metrics, index=['MAE'])
+            df.to_csv(os.path.join(self.args.output_path, 'sample_{}_metrics.csv'.format(i)), float_format='%.8f', index=False)
+            print('Evaluation complete')
 
-        df = pd.DataFrame(data=metrics, index=['MAE'])
-        df.to_csv(os.path.join(self.args.output_path, 'predict_metrics.csv'), float_format='%.8f', index=False)
-        tensors = torch.cat([output, ref], dim=1)
-        visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
-                            anchor, blockage_len, self.args.output_path, 'predict')
-        visualizer.plot_psd(tensors, self.args.radial_range[0], anchor, blockage_len,
-                            self.args.output_path, 'predict')
-        print('Predict done.')
+            print('\nVisualizing...')
+            tensors = torch.cat([output, ref], dim=1)
+            visualizer.plot_ref(tensors, t, self.args.azimuth_range[0], self.args.radial_range[0],
+                                anchor, blockage_len, self.args.output_path, 'sample_{}'.format(i))
+            visualizer.plot_psd(tensors, self.args.radial_range[0], anchor, blockage_len,
+                                self.args.output_path, 'sample_{}'.format(i))
+            print('Visualization complete')
+
+        print('\nPrediction complete')
+        

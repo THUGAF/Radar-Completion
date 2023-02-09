@@ -14,21 +14,21 @@ parser = argparse.ArgumentParser()
 # input and output settings
 parser.add_argument('--data-path', type=str, default='/data/gaf/SBandBasicPt')
 parser.add_argument('--output-path', type=str, default='results')
-parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2, 3])
+parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2])
 parser.add_argument('--azimuth-range', type=int, nargs='+', default=[0, 360])
 parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 
 # data loading settings
-parser.add_argument('--train-ratio', type=float, default=0.7)
-parser.add_argument('--valid-ratio', type=float, default=0.1)
-parser.add_argument('--sample-index', type=int, default=0)
+parser.add_argument('--train-ratio', type=float, default=0.64)
+parser.add_argument('--valid-ratio', type=float, default=0.16)
 parser.add_argument('--vmax', type=float, default=70.0)
 parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
-parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 20])
-parser.add_argument('--sample-anchor', type=int, default=25)
-parser.add_argument('--sample-blockage-len', type=int, default=15)
+parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 40])
+parser.add_argument('--sample-index', type=int, nargs='+', default=[0])
+parser.add_argument('--sample-anchor', type=int, default=0)
+parser.add_argument('--sample-blockage-len', type=int, default=40)
 
 # model settings
 parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet', 'UNet_SA', 'DilatedUNet', 'DilatedUNet_SA'], default='UNet')
@@ -60,8 +60,8 @@ def main(args):
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
-    in_channels = len(args.elevation_id) * 2
-    model = eval(args.model)(in_channels)
+    input_dim = len(args.elevation_id) * 2
+    model = eval(args.model)(input_dim)
     model = model.to(args.device)
 
     # Load data

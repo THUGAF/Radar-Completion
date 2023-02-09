@@ -57,6 +57,7 @@ def main(args):
     torch.cuda.manual_seed_all(args.random_seed)
 
     # Set device
+    torch.set_num_threads(args.num_threads)
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model

@@ -45,7 +45,7 @@ def main(args):
     torch.manual_seed(args.random_seed)
     torch.cuda.manual_seed(args.random_seed)
     torch.cuda.manual_seed_all(args.random_seed)
-    torch.autograd.set_detect_anomaly(True)
+    torch.set_num_threads(args.num_threads)
 
     # Load data
     if args.test:

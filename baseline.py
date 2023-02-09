@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 # input and output settings
 parser.add_argument('--data-path', type=str, default='/data/gaf/SBandBasicUnzip')
 parser.add_argument('--output-path', type=str, default='results')
-parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2, 3])
+parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2])
 parser.add_argument('--azimuth-range', type=int, nargs='+', default=[0, 360])
 parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 
@@ -21,14 +21,14 @@ parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 parser.add_argument('--baseline-method', type=str, default='direct')
 parser.add_argument('--train-ratio', type=float, default=0.7)
 parser.add_argument('--valid-ratio', type=float, default=0.1)
-parser.add_argument('--sample-index', type=int, default=0)
 parser.add_argument('--vmax', type=float, default=70.0)
 parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 20])
-parser.add_argument('--sample-anchor', type=int, default=25)
-parser.add_argument('--sample-blockage-len', type=int, default=15)
+parser.add_argument('--sample-index', type=int, nargs='+', default=[0])
+parser.add_argument('--sample-anchor', type=int, default=0)
+parser.add_argument('--sample-blockage-len', type=int, default=40)
 
 # training settings
 parser.add_argument('--test', action='store_true')

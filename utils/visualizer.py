@@ -47,13 +47,12 @@ def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
         for c in range(num_cols):
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
             pm = ax.pcolormesh(thetas, rhos, tensors[r, c].T, cmap=CMAP, norm=NORM)
-            if c == 0 or c == 1:
-                ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
-                        np.arange(radial_start_point, radial_start_point + radial_size), 
-                        '--', color='k', linewidth=1)
-                ax.plot(np.ones(radial_size) * (anchor + blockage_len + azimuth_start_point) / 180 * np.pi,
-                        np.arange(radial_start_point, radial_start_point + radial_size), 
-                        '--', color='k', linewidth=1)
+            ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
+                    np.arange(radial_start_point, radial_start_point + radial_size), 
+                    '--', color='k', linewidth=1)
+            ax.plot(np.ones(radial_size) * (anchor + blockage_len + azimuth_start_point) / 180 * np.pi,
+                    np.arange(radial_start_point, radial_start_point + radial_size), 
+                    '--', color='k', linewidth=1)
             if c == 0:
                 ax.set_title(current_datetime[r], fontsize=12, loc='left', pad=1)
             ax.set_xlim(azimuth_start_point / 180 * np.pi, (azimuth_start_point + azimuth_size) / 180 * np.pi)
@@ -64,7 +63,7 @@ def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
             ax.tick_params(labelsize=12)
 
     fig.subplots_adjust(right=0.9, wspace=0.3, hspace=0.3)
-    cax = fig.add_axes([0.94, 0.2, 0.01, 0.6])
+    cax = fig.add_axes([0.95, 0.2, 0.005 * num_rows, 0.6])
     cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical', extend='both')
     cbar.set_label('dBZ', fontsize=14)
     cbar.ax.tick_params(labelsize=14)
@@ -72,8 +71,7 @@ def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
     fig.savefig('{}/{}.png'.format(root, stage), bbox_inches='tight')
 
 
-def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, blockage_len: int, 
-             root: str, stage: str):
+def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, blockage_len: int, root: str, stage: str):
     tensors = tensors.detach().cpu()
     radial_size = tensors.size(3)
     pred, truth = tensors[0, 0].numpy(), tensors[0, 1].numpy()

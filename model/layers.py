@@ -2,24 +2,20 @@ import torch
 import torch.nn as nn
 
 
-class Flatten(nn.Module):
-    def __init__(self):
+class UNetppConv2d(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, padding: int = 1):
         super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding),
+            nn.LeakyReLU(0.2)
+        )
 
-    def forward(self, x):
-        return x.view(x.shape[0], -1)
-
-
-class Concatenate(nn.Module):
-    def __init__(self, dim=-1):
-        super().__init__()
-        self.dim = dim
-
-    def forward(self, x):
-        return torch.cat(x, dim=self.dim)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.conv(x)
+        return out
 
 
-class DoubleConv2d(nn.Module):
+class UNetDoubleConv2d(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 1, 
                  stride: int = 1, dilation: int = 1, padding: int = 0):
         super().__init__()
@@ -39,7 +35,7 @@ class DoubleConv2d(nn.Module):
         return out
 
 
-class DoubleDeconv2d(nn.Module):
+class UNetDoubleDeconv2d(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 1, 
                  stride: int = 1, dilation: int = 1, padding: int = 0, output_padding: int = 0):
         super().__init__()

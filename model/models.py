@@ -98,20 +98,56 @@ class GLCIC(nn.Module):
         return x
 
 
+# refers to https://github.com/avgeiss/radar_inpainting
+class UNetppL3(nn.Module):
+    def __init__(self, in_channels: int, base_channels: int = 8):
+        super().__init__()
+        self.conv00 = UNetppConv2d(in_channels, base_channels)
+        self.conv10 = UNetppConv2d(base_channels, base_channels)
+        self.conv20 = UNetppConv2d(base_channels, base_channels)
+        self.conv30 = UNetppConv2d(base_channels, base_channels)
+        self.conv01 = UNetppConv2d(base_channels * 2, base_channels)
+        self.conv11 = UNetppConv2d(base_channels * 3, base_channels)
+        self.conv21 = UNetppConv2d(base_channels * 3, base_channels)
+        self.conv02 = UNetppConv2d(base_channels * 3, base_channels)
+        self.conv12 = UNetppConv2d(base_channels * 4, base_channels)
+        self.conv03 = UNetppConv2d(base_channels * 4, base_channels)
+        self.downsampling = nn.MaxPool2d(2, 2)
+        self.upsampling = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.out_conv = nn.Sequential(
+            nn.Conv2d(base_channels, base_channels, kernel_size=3, padding=1),
+            nn.Tanh(),
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        y00 = self.conv00(x)
+        y10 = self.conv10(self.downsampling(y00))
+        y20 = self.conv20(self.downsampling(y10))
+        y30 = self.conv30(self.downsampling(y20))
+        y01 = self.conv01(torch.cat([y00, self.upsampling(y10)], dim=1))
+        y11 = self.conv11(torch.cat([y10, self.upsampling(y20), self.downsampling(y01)], dim=1))
+        y21 = self.conv21(torch.cat([y20, self.upsampling(y30), self.downsampling(y11)], dim=1))
+        y02 = self.conv02(torch.cat([y00, y01, self.upsampling(y11)], dim=1))
+        y12 = self.conv12(torch.cat([y10, y11, self.upsampling(y21), self.downsampling(y02)], dim=1))
+        y03 = self.conv12(torch.cat([y00, y01, y02, self.upsampling(y12)], dim=1))
+        out = self.out_conv(y03)
+        return out
+
+
 class UNet(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         # Downscaling
         self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
         self.downscaler = nn.MaxPool2d(2, 2)
-        self.down1 = DoubleConv2d(64, 128)
-        self.down2 = DoubleConv2d(128, 256)
-        self.down3 = DoubleConv2d(256, 256)
+        self.down1 = UNetDoubleConv2d(64, 128)
+        self.down2 = UNetDoubleConv2d(128, 256)
+        self.down3 = UNetDoubleConv2d(256, 256)
         # Upscaling
         self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.up3 = DoubleConv2d(512, 128)
-        self.up2 = DoubleConv2d(256, 64)
-        self.up1 = DoubleConv2d(128, 64)
+        self.up3 = UNetDoubleConv2d(512, 128)
+        self.up2 = UNetDoubleConv2d(256, 64)
+        self.up1 = UNetDoubleConv2d(128, 64)
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 
@@ -136,16 +172,16 @@ class UNet_SA(nn.Module):
         # Downscaling
         self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
         self.downscaler = nn.MaxPool2d(2, 2)
-        self.down1 = DoubleConv2d(64, 128)
-        self.down2 = DoubleConv2d(128, 256)
-        self.down3 = DoubleConv2d(256, 256)
+        self.down1 = UNetDoubleConv2d(64, 128)
+        self.down2 = UNetDoubleConv2d(128, 256)
+        self.down3 = UNetDoubleConv2d(256, 256)
         # Upscaling
         self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.up3 = DoubleConv2d(512, 128)
+        self.up3 = UNetDoubleConv2d(512, 128)
         self.self_attention2 = SelfAttention(128)
-        self.up2 = DoubleConv2d(256, 64)
+        self.up2 = UNetDoubleConv2d(256, 64)
         self.self_attention1 = SelfAttention(64)
-        self.up1 = DoubleConv2d(128, 64)
+        self.up1 = UNetDoubleConv2d(128, 64)
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 
@@ -170,9 +206,9 @@ class DilatedUNet(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
-        self.down1 = DoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
-        self.down2 = DoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.down3 = DoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
+        self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
         self.dilated_conv1 = nn.Sequential(
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(256),
@@ -193,9 +229,9 @@ class DilatedUNet(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True)
         )
-        self.up3 = DoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.up2 = DoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.up1 = DoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 
@@ -220,9 +256,9 @@ class DilatedUNet_SA(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
-        self.down1 = DoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
-        self.down2 = DoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.down3 = DoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
+        self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
         self.dilated_conv1 = nn.Sequential(
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(256),
@@ -243,11 +279,11 @@ class DilatedUNet_SA(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True)
         )
-        self.up3 = DoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.self_attention2 = SelfAttention(128)
-        self.up2 = DoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.self_attention1 = SelfAttention(64)
-        self.up1 = DoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 

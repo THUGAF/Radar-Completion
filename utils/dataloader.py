@@ -19,14 +19,12 @@ class TrainingDataset(Dataset):
         self.elevation_id = elevation_id
         self.azimuth_range = azimuth_range
         self.radial_range = radial_range
-        self.sample_num = 0
         self.files = []
         date_list = sorted(os.listdir(root))
         for date in date_list:
             file_list = sorted(os.listdir(os.path.join(root, date)))
             for file_ in file_list:
                 self.files.append(os.path.join(root, date, file_))
-                self.sample_num += 1
 
     def __getitem__(self, index):
         filename = self.files[index]
@@ -36,7 +34,7 @@ class TrainingDataset(Dataset):
         return t, elev, ref
     
     def __len__(self):
-        return self.sample_num
+        return len(self.files)
 
 
 class SampleDataset(TrainingDataset):
@@ -137,9 +135,3 @@ def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List
     sample_set = SampleDataset(root, sample_index, elevation_id, azimuth_range, radial_range)
     sample_loader = DataLoader(sample_set, batch_size=1)
     return sample_loader
-
-
-# if __name__ == '__main__':
-#     sample_loader = load_sample('/data/gaf/SBandBasicPt', elevation_id=[1, 2, 3])
-#     for t, elev, ref in sample_loader:
-#         print(t, elev.size(), ref.size())

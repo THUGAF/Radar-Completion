@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 parser = argparse.ArgumentParser()
 
 # input and output settings
-parser.add_argument('--data-path', type=str, default='/data/gaf/SBandBasicUnzip')
+parser.add_argument('--data-path', type=str)
 parser.add_argument('--output-path', type=str, default='results')
 parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2])
 parser.add_argument('--azimuth-range', type=int, nargs='+', default=[0, 360])

@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 parser = argparse.ArgumentParser()
 
 # input and output settings
-parser.add_argument('--data-path', type=str, default='/data/gaf/SBandBasicPt')
+parser.add_argument('--data-path', type=str)
 parser.add_argument('--output-path', type=str, default='results')
 parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2])
 parser.add_argument('--azimuth-range', type=int, nargs='+', default=[0, 360])
@@ -31,7 +31,7 @@ parser.add_argument('--sample-anchor', type=int, default=0)
 parser.add_argument('--sample-blockage-len', type=int, default=40)
 
 # model settings
-parser.add_argument('--model', type=str, choices=['GLCIC', 'UNet', 'UNet_SA', 'DilatedUNet', 'DilatedUNet_SA'], default='UNet')
+parser.add_argument('--model', type=str, choices=['GLCIC', 'UNetppL3'], default='GLCIC')
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')

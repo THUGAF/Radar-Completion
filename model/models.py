@@ -115,7 +115,7 @@ class UNetppL3(nn.Module):
         self.downsampling = nn.MaxPool2d(2, 2)
         self.upsampling = nn.UpsamplingBilinear2d(scale_factor=2)
         self.out_conv = nn.Sequential(
-            nn.Conv2d(base_channels, base_channels, kernel_size=3, padding=1),
+            nn.Conv2d(base_channels, 1, kernel_size=3, padding=1),
             nn.Tanh(),
         )
     

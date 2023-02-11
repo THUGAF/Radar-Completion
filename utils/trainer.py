@@ -73,7 +73,7 @@ class Trainer:
             start_iterations = 0
         self.total_epochs = int(math.ceil((self.args.max_iterations - start_iterations) / len(train_loader)))
 
-        self.optimizer = Adam(self.model.parameters())
+        self.optimizer = Adam(self.model.parameters(), lr=self.args.learning_rate, weight_decay=self.args.weight_decay)
 
         if self.args.train:
             self.train()
@@ -109,12 +109,8 @@ class Trainer:
             self.model.train()
 
             for i, (t, elev, ref) in enumerate(self.train_loader):
-                # Check max iterations
                 self.current_iterations += 1
-                if self.current_iterations > self.args.max_iterations:
-                    print('Max interations %d reached.' % self.args.max_iterations)
-                    break
-
+                
                 # load data
                 ref = ref.to(self.args.device)
                 ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
@@ -141,6 +137,11 @@ class Trainer:
                 if (i + 1) % self.args.display_interval == 0:
                     print('Epoch: [{}][{}] Batch: [{}][{}] Loss: {:.6f}'.format(
                         epoch + 1, self.total_epochs, i + 1, len(self.train_loader), loss.item()))
+                
+                # Check max iterations
+                if self.current_iterations >= self.args.max_iterations:
+                    print('Max interations %d reached.' % self.args.max_iterations)
+                    break
             
             # Save loss
             self.train_loss.append(np.mean(train_loss))
@@ -261,8 +262,12 @@ class Trainer:
             metrics = {}
             ref = ref.to(self.args.device)
             ref = scaler.minmax_norm(ref, self.args.vmax, self.args.vmin)
+            if isinstance(self.args.sample_anchor, int):
+                self.args.sample_anchor = [self.args.sample_anchor]
+            if isinstance(self.args.sample_blockage_len, int):
+                self.args.sample_blockage_len = [self.args.sample_blockage_len]
             masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
-                ref, self.args.azimuth_range[0], self.args.sample_anchor, self.args.sample_blockage_len)
+                ref, self.args.azimuth_range[0], self.args.sample_anchor[i], self.args.sample_blockage_len[i])
             
             # forward
             input_ = torch.cat([masked_ref, mask], dim=1)

@@ -1,11 +1,11 @@
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=0 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandBasicPt \
-    --output-path results/UNetppL3 \
+    --output-path results/UNet \
     --train \
     --test \
     --predict \
-    --model UNetppL3 \
+    --model UNet \
     --elevation-id 1 2 3 \
     --early-stopping \
     --batch-size 16 \
@@ -17,4 +17,4 @@ nohup python -u train.py \
     --sample-anchor 180 \
     --sample-blockage-len 40 \
     --display-interval 50 \
-    > results/UNetppL3.log 2>&1 &
+    > results/UNet.log 2>&1 &

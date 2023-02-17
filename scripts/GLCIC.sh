@@ -8,7 +8,7 @@ nohup python -u train.py \
     --model GLCIC \
     --elevation-id 1 2 3 \
     --early-stopping \
-    --batch-size 8 \
+    --batch-size 16 \
     --num-threads 8 \
     --num-workers 8 \
     --learning-rate 1e-4 \

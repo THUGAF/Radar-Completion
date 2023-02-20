@@ -81,40 +81,40 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     pred = pred[anchor: anchor + blockage_len, radial_start_point: radial_start_point + radial_size]
     truth = truth[anchor: anchor + blockage_len, radial_start_point: radial_start_point + radial_size]
     
-    pred_radial_freq, pred_radial_psd = scipy.signal.welch(pred, nperseg=pred.shape[1], axis=1)
-    pred_radial_freq, pred_radial_mean_psd = pred_radial_freq[1:], np.mean(pred_radial_psd, axis=0)[1:]
-    pred_radial_wavelength = 1 / pred_radial_freq
-    pred_azimuthal_freq, pred_azimuthal_psd = scipy.signal.welch(pred, nperseg=pred.shape[0], axis=0)
-    pred_azimuthal_freq, pred_azimuthal_mean_psd = pred_azimuthal_freq[1:], np.mean(pred_azimuthal_psd, axis=1)[1:]
-    pred_azimuthal_wavelength = 1 / pred_azimuthal_freq
+    pred_freq_radial, pred_psd_radial = scipy.signal.welch(pred, nperseg=pred.shape[1], axis=1)
+    pred_freq_radial, pred_psd_radial_mean = pred_freq_radial[1:], np.mean(pred_psd_radial, axis=0)[1:]
+    pred_wavelength_radial = 1 / pred_freq_radial
+    pred_freq_azimuthal, pred_psd_azimuthal = scipy.signal.welch(pred, nperseg=pred.shape[0], axis=0)
+    pred_freq_azimuthal, pred_psd_azimuthal_mean = pred_freq_azimuthal[1:], np.mean(pred_psd_azimuthal, axis=1)[1:]
+    pred_wavelength_azimuthal = 1 / pred_freq_azimuthal
 
-    truth_radial_freq, truth_radial_psd = scipy.signal.welch(truth, nperseg=truth.shape[1], axis=1)
-    truth_radial_freq, truth_radial_mean_psd = truth_radial_freq[1:], np.mean(truth_radial_psd, axis=0)[1:]
-    truth_radial_wavelength = 1 / truth_radial_freq
-    truth_azimuthal_freq, truth_azimuthal_psd = scipy.signal.welch(truth, nperseg=truth.shape[0], axis=0)
-    truth_azimuthal_freq, truth_azimuthal_mean_psd = truth_azimuthal_freq[1:], np.mean(truth_azimuthal_psd, axis=1)[1:]
-    truth_azimuthal_wavelength = 1 / truth_azimuthal_freq
+    truth_freq_radial, truth_psd_radial = scipy.signal.welch(truth, nperseg=truth.shape[1], axis=1)
+    truth_freq_radial, truth_radial_mean_psd = truth_freq_radial[1:], np.mean(truth_psd_radial, axis=0)[1:]
+    truth_wavelength_radial = 1 / truth_freq_radial
+    truth_freq_azimuthal, truth_psd_azimuthal = scipy.signal.welch(truth, nperseg=truth.shape[0], axis=0)
+    truth_freq_azimuthal, truth_psd_azimuthal_mean = truth_freq_azimuthal[1:], np.mean(truth_psd_azimuthal, axis=1)[1:]
+    truth_wavelength_azimuthal = 1 / truth_freq_azimuthal
 
     radial_data = {
-        'radial_wavelength': truth_radial_wavelength,
-        'pred_radial_psd': pred_radial_mean_psd,
-        'truth_radial_psd': truth_radial_mean_psd,
+        'wavelength_radial': truth_wavelength_radial,
+        'pred_psd_radial': pred_psd_radial_mean,
+        'truth_psd_radial': truth_radial_mean_psd,
     }
     azimuthal_data = {
-        'azimuthal_wavelength': truth_azimuthal_wavelength,
-        'pred_azimuthal_psd': pred_azimuthal_mean_psd,
-        'truth_azimuthal_psd': truth_azimuthal_mean_psd
+        'wavelength_azimuthal': truth_wavelength_azimuthal,
+        'pred_psd_azimuthal': pred_psd_azimuthal_mean,
+        'truth_psd_azimuthal': truth_psd_azimuthal_mean
     }
-    radial_df = pd.DataFrame(radial_data)
-    azimuthal_df = pd.DataFrame(azimuthal_data)
-    radial_df.to_csv('{}/{}_psd_radial.csv'.format(root, stage), float_format='%.8f', index=False)
-    azimuthal_df.to_csv('{}/{}_psd_azimuthal.csv'.format(root, stage), float_format='%.8f', index=False)
+    df_radial = pd.DataFrame(radial_data)
+    df_azimuthal = pd.DataFrame(azimuthal_data)
+    df_radial.to_csv('{}/{}_psd_radial.csv'.format(root, stage), float_format='%.8f', index=False)
+    df_azimuthal.to_csv('{}/{}_psd_azimuthal.csv'.format(root, stage), float_format='%.8f', index=False)
 
     fig1 = plt.figure(figsize=(8, 4), dpi=600)
     fig2 = plt.figure(figsize=(8, 4), dpi=600)
     ax1 = fig1.add_subplot(1, 1, 1)
-    ax1.plot(pred_radial_wavelength, pred_radial_mean_psd, color='b')
-    ax1.plot(truth_radial_wavelength, truth_radial_mean_psd, color='r')
+    ax1.plot(pred_wavelength_radial, pred_psd_radial_mean, color='b')
+    ax1.plot(truth_wavelength_radial, truth_radial_mean_psd, color='r')
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
@@ -123,8 +123,8 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     ax1.legend(['Prediction', 'Truth'])
 
     ax2 = fig2.add_subplot(1, 1, 1)
-    ax2.plot(pred_azimuthal_wavelength, pred_azimuthal_mean_psd, color='b')
-    ax2.plot(truth_azimuthal_wavelength, truth_azimuthal_mean_psd, color='r')
+    ax2.plot(pred_wavelength_azimuthal, pred_psd_azimuthal_mean, color='b')
+    ax2.plot(truth_wavelength_azimuthal, truth_psd_azimuthal_mean, color='r')
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
@@ -132,5 +132,5 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     ax2.set_ylabel('Azimuthal Power Spectral Density', fontsize=14)
     ax2.legend(['Prediction', 'Truth'])
 
-    fig1.savefig('{}/{}_radial_psd.png'.format(root, stage), bbox_inches='tight')
-    fig2.savefig('{}/{}_azimuthal_psd.png'.format(root, stage), bbox_inches='tight')
+    fig1.savefig('{}/{}_psd_radial.png'.format(root, stage), bbox_inches='tight')
+    fig2.savefig('{}/{}_psd_azimuthal.png'.format(root, stage), bbox_inches='tight')

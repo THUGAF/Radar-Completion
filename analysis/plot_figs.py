@@ -5,64 +5,64 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib.colors as pcolors
 import matplotlib.cm as cm
-import pyproj
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import sys
+sys.path.append(os.getcwd())
+import train
 
 
 plt.rcParams['font.sans-serif'] = 'Arial'
-
-# Coordinate transformation
-TRANS_WGS84_TO_UTM = pyproj.Transformer.from_crs('epsg:4326', 'epsg:3857')
-TRANS_UTM_TO_WGS84 = pyproj.Transformer.from_crs('epsg:3857', 'epsg:4326')
-
-# Global information
-CENTER_LON, CENTER_LAT = 116.47195, 39.808887
-CENTER_UTM_X, CENTER_UTM_Y = TRANS_WGS84_TO_UTM.transform(CENTER_LAT, CENTER_LON)
-LEFT_BOTTOM_LAT, LEFT_BOTTOM_LON = TRANS_UTM_TO_WGS84.transform(CENTER_UTM_X, CENTER_UTM_Y)
-RIGHT_TOP_LAT, RIGHT_TOP_LON = TRANS_UTM_TO_WGS84.transform(CENTER_UTM_X, CENTER_UTM_Y)
-AREA = [LEFT_BOTTOM_LON, RIGHT_TOP_LON, LEFT_BOTTOM_LAT, RIGHT_TOP_LAT]
-
 CMAP = pcolors.ListedColormap([[255 / 255, 255 / 255, 255 / 255], [41 / 255, 237 / 255, 238 / 255], [29 / 255, 175 / 255, 243 / 255],
-                                [10 / 255, 35 / 255, 244 / 255], [41 / 255, 253 / 255, 47 / 255], [30 / 255, 199 / 255, 34 / 255],
-                                [19 / 255, 144 / 255, 22 / 255], [254 / 255, 253 / 255, 56 / 255], [230 / 255, 191 / 255, 43 / 255],
-                                [251 / 255, 144 / 255, 37 / 255], [249 / 255, 14 / 255, 28 / 255], [209 / 255, 11 / 255, 21 / 255],
-                                [189 / 255, 8 / 255, 19 / 255], [219 / 255, 102 / 255, 252 / 255], [186 / 255, 36 / 255, 235 / 255]])
+                               [10 / 255, 35 / 255, 244 / 255], [41 / 255, 253 / 255, 47 / 255], [30 / 255, 199 / 255, 34 / 255],
+                               [19 / 255, 144 / 255, 22 / 255], [254 / 255, 253 / 255, 56 / 255], [230 / 255, 191 / 255, 43 / 255],
+                               [251 / 255, 144 / 255, 37 / 255], [249 / 255, 14 / 255, 28 / 255], [209 / 255, 11 / 255, 21 / 255],
+                               [189 / 255, 8 / 255, 19 / 255], [219 / 255, 102 / 255, 252 / 255], [186 / 255, 36 / 255, 235 / 255]])
 NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), CMAP.N)
+
+AZIMUTH_START_POINT = 0
+RADIAL_START_POINT = 0
+ANCHOR = [180]
+BLOCKAGE_LEN = [40]
+
 
 def plot_refs(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
-    tensor = torch.load(os.path.join(model_dirs[0], '{}/{}.pt'.format(stage, stage)))
-    tensor = np.flip(tensor[0].numpy(), axis=0)
-    
     num_subplot = len(model_names) + 1
     fig = plt.figure(figsize=(num_subplot // 2 * 6, 12), dpi=600)
-    for i in range(num_subplot):
-        ax = fig.add_subplot(2, num_subplot // 2, i + 1, projection=ccrs.Mercator())
-        title = 'Truth' if i == 0 else model_names[i - 1]
-        ax.set_extent(AREA, crs=ccrs.PlateCarree())
-        ax.coastlines()
-        ax.add_feature(cfeature.BORDERS)
-        ax.add_feature(cfeature.STATES)
-        ax.imshow(tensor, cmap=CMAP, norm=NORM, extent=AREA, transform=ccrs.PlateCarree())
-
-        xticks = np.arange(np.ceil(2 * AREA[0]) / 2, np.ceil(2 * AREA[1]) / 2, 0.5)
-        yticks = np.arange(np.ceil(2 * AREA[2]) / 2, np.ceil(2 * AREA[3]) / 2, 0.5)
-        ax.set_xticks(np.arange(np.ceil(AREA[0]), np.ceil(AREA[1]), 1), crs=ccrs.PlateCarree())
-        ax.set_yticks(np.arange(np.ceil(AREA[2]), np.ceil(AREA[3]), 1), crs=ccrs.PlateCarree())
-        ax.gridlines(crs=ccrs.PlateCarree(), xlocs=xticks, ylocs=yticks, draw_labels=False, 
-                    linewidth=1, linestyle=':', color='k', alpha=0.8)
-
-        ax.xaxis.set_major_formatter(LongitudeFormatter())
-        ax.yaxis.set_major_formatter(LatitudeFormatter())
-        ax.tick_params(labelsize=18)
-        ax.set_title(title, fontsize=22)
     
-    fig.subplots_adjust(right=0.92)
+    truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 0]
+    azimuth_size, radial_size = truth.size(0), truth.size(1)
+    thetas = np.arange(AZIMUTH_START_POINT, AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi
+    rhos = np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
+    thetas, rhos = np.meshgrid(thetas, rhos)
+    
+    for i in range(num_subplot):
+        if i == 0:
+            tensor = truth
+        else:
+            tensor = torch.load(os.path.join(model_dirs[i - 1], '{}.pt'.format(stage)))[0, 1]
+        ax = fig.add_subplot(2, num_subplot // 2, i + 1, projection='polar')
+        title = 'Truth' if i == 0 else model_names[i - 1]
+        pm = ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
+        anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
+        ax.plot(np.ones(radial_size) * (anchor + AZIMUTH_START_POINT) / 180 * np.pi,
+                np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
+                '--', color='k', linewidth=1)
+        ax.plot(np.ones(radial_size) * (anchor + blockage_len + AZIMUTH_START_POINT) / 180 * np.pi,
+                np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
+                '--', color='k', linewidth=1)
+
+        ax.set_title(title, fontsize=20, loc='left', pad=1)
+        ax.set_xlim(AZIMUTH_START_POINT / 180 * np.pi, (AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi)
+        ax.set_rlim(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
+        ax.set_theta_zero_location('N')
+        ax.set_theta_direction('clockwise')
+        ax.grid(True, linewidth=1)
+        ax.tick_params(labelsize=16)
+    
+    fig.subplots_adjust(right=0.90)
     cax = fig.add_axes([0.94, 0.14, 0.012, 0.72])
     cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical')
-    cbar.set_label('dBZ', fontsize=22)
+    cbar.set_label('dBZ', fontsize=20)
     cbar.ax.tick_params(labelsize=18)
 
     fig.savefig(img_path, bbox_inches='tight')
@@ -72,26 +72,25 @@ def plot_refs(model_names, model_dirs, stage, img_path):
 def plot_psd(model_names, model_dirs, stage, img_path_1, img_path_2):
     print('Plotting {} ...'.format(img_path_1))
     print('Plotting {} ...'.format(img_path_2))
-    psd_radial_df = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_radial.csv'.format(stage)))
-    psd_azimuthal_df = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_azimuthal.csv'.format(stage)))
-    radial_wavelength, truth_radial_psd = psd_radial_df['radial_wavelength'], psd_radial_df['truth_radial_psd']
-    azimuthal_wavelength, truth_azimuthal_psd = psd_azimuthal_df['azimuthal_wavelength'], psd_azimuthal_df['truth_azimuthal_psd']
+    psd_df_radial = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_radial.csv'.format(stage)))
+    psd_df_azimuthal = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_azimuthal.csv'.format(stage)))
+    radial_wavelength, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
+    azimuthal_wavelength, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
 
     fig1 = plt.figure(figsize=(8, 4), dpi=600)
     fig2 = plt.figure(figsize=(8, 4), dpi=600)
     ax1 = fig1.add_subplot(1, 1, 1)
     ax2 = fig2.add_subplot(1, 1, 1)
-
-    ax1.plot(radial_wavelength, truth_radial_psd, color='k')
-    ax2.plot(azimuthal_wavelength, truth_azimuthal_psd, color='k')
-
+    
+    ax1.plot(radial_wavelength, truth_psd_radial, color='k')
+    ax2.plot(azimuthal_wavelength, truth_psd_azimuthal, color='k')
     legend = ['Truth']
     for i in range(len(model_names)):
-        psd_radial_df = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_radial.csv'.format(stage)))
-        psd_azimuthal_df = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_azimuthal.csv'.format(stage)))
-        pred_radial_psd, pred_azimuthal_psd = psd_radial_df['pred_psd_radial'], psd_azimuthal_df['pred_psd_azimuthal']
-        ax1.plot(radial_wavelength, pred_radial_psd)
-        ax2.plot(azimuthal_wavelength, pred_azimuthal_psd)
+        psd_df_radial = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_radial.csv'.format(stage)))
+        psd_df_azimuthal = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_azimuthal.csv'.format(stage)))
+        pred_psd_radial, pred_psd_azimuthal = psd_df_radial['pred_psd_radial'], psd_df_azimuthal['pred_psd_azimuthal']
+        ax1.plot(radial_wavelength, pred_psd_radial)
+        ax2.plot(azimuthal_wavelength, pred_psd_azimuthal)
         legend.append(model_names[i])
 
     ax1.set_xscale('log', base=2)
@@ -112,3 +111,10 @@ def plot_psd(model_names, model_dirs, stage, img_path_1, img_path_2):
     fig2.savefig(img_path_2, bbox_inches='tight')
     print('{} saved'.format(img_path_1))
     print('{} saved'.format(img_path_2))
+
+
+if __name__ == '__main__':
+    model_names = ['Upper', 'GLCIC', 'UNetppL3', 'UNet', 'DilatedUNet']
+    model_dirs = [os.path.join('results', m) for m in model_names]
+    plot_refs(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
+    plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_radial_sample_0.jpg', 'results/psd_azimuthal_sample_0.jpg')

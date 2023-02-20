@@ -138,66 +138,30 @@ class UNet(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
         # Downscaling
-        self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
-        self.downscaler = nn.MaxPool2d(2, 2)
-        self.down1 = UNetDoubleConv2d(64, 128)
-        self.down2 = UNetDoubleConv2d(128, 256)
-        self.down3 = UNetDoubleConv2d(256, 256)
+        self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
+        self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
+        self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.mid_conv = nn.Conv2d(256, 256, kernel_size=1)
         # Upscaling
-        self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.up3 = UNetDoubleConv2d(512, 128)
-        self.up2 = UNetDoubleConv2d(256, 64)
-        self.up1 = UNetDoubleConv2d(128, 64)
+        self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Downscaling
         h1 = self.in_conv(x)
-        h2 = self.down1(self.downscaler(h1))
-        h3 = self.down2(self.downscaler(h2))
-        h4 = self.down3(self.downscaler(h3))
+        h2 = self.down1(h1)
+        h3 = self.down2(h2)
+        h4 = self.down3(h3)
+        h4p = self.mid_conv(h4)
         # Upscaling
-        h3p = self.up3(torch.cat([self.upscaler(h4), h3], dim=1))
-        h2p = self.up2(torch.cat([self.upscaler(h3p), h2], dim=1))
-        h1p = self.up1(torch.cat([self.upscaler(h2p), h1], dim=1))
-        out = self.out_conv(h1p)
-        out = self.act(out)
-        return out
-
-
-class UNet_SA(nn.Module):
-    def __init__(self, in_channels: int):
-        super().__init__()
-        # Downscaling
-        self.in_conv = nn.Conv2d(in_channels, 64, kernel_size=1)
-        self.downscaler = nn.MaxPool2d(2, 2)
-        self.down1 = UNetDoubleConv2d(64, 128)
-        self.down2 = UNetDoubleConv2d(128, 256)
-        self.down3 = UNetDoubleConv2d(256, 256)
-        # Upscaling
-        self.upscaler = nn.Upsample(scale_factor=2, mode='bilinear')
-        self.up3 = UNetDoubleConv2d(512, 128)
-        self.self_attention2 = SelfAttention(128)
-        self.up2 = UNetDoubleConv2d(256, 64)
-        self.self_attention1 = SelfAttention(64)
-        self.up1 = UNetDoubleConv2d(128, 64)
-        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
-        self.act = nn.Sigmoid()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Downscaling
-        h1 = self.in_conv(x)
-        h2 = self.down1(self.downscaler(h1))
-        h3 = self.down2(self.downscaler(h2))
-        h4 = self.down3(self.downscaler(h3))
-        # Upscaling
-        h3p = self.up3(torch.cat([self.upscaler(h4), h3], dim=1))
-        h3p = self.self_attention2(h3p)
-        h2p = self.up2(torch.cat([self.upscaler(h3p), h2], dim=1))
-        h2p = self.self_attention1(h2p)
-        h1p = self.up1(torch.cat([self.upscaler(h2p), h1], dim=1))
-        out = self.out_conv(h1p)
+        h3p = self.up3(torch.cat([h4p, h4], dim=1))
+        h2p = self.up2(torch.cat([h3p, h3], dim=1))
+        h1p = self.up1(torch.cat([h2p, h2], dim=1))
+        out = self.out_conv(torch.cat([h1p, h1], dim=1))
         out = self.act(out)
         return out
 
@@ -232,7 +196,7 @@ class DilatedUNet(nn.Module):
         self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.act = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -247,61 +211,6 @@ class DilatedUNet(nn.Module):
         h3p = self.up3(torch.cat([hd, h4], dim=1))
         h2p = self.up2(torch.cat([h3p, h3], dim=1))
         h1p = self.up1(torch.cat([h2p, h2], dim=1))
-        out = self.out_conv(h1p)
+        out = self.out_conv(torch.cat([h1p, h1], dim=1))
         out = self.act(out)
         return out
-
-
-class DilatedUNet_SA(nn.Module):
-    def __init__(self, in_channels: int):
-        super().__init__()
-        self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
-        self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
-        self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
-        self.dilated_conv1 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True)
-        )
-        self.dilated_conv2 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=2, padding=2),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True)
-        )
-        self.dilated_conv3 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=4, padding=4),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True)
-        )
-        self.dilated_conv4 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=8, padding=8),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True)
-        )
-        self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.self_attention2 = SelfAttention(128)
-        self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.self_attention1 = SelfAttention(64)
-        self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.out_conv = nn.Conv2d(32, 1, kernel_size=1)
-        self.act = nn.Sigmoid()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h1 = self.in_conv(x)
-        h2 = self.down1(h1)
-        h3 = self.down2(h2)
-        h4 = self.down3(h3)
-        hd = self.dilated_conv1(h4)
-        hd = self.dilated_conv2(hd)
-        hd = self.dilated_conv3(hd)
-        hd = self.dilated_conv4(hd)
-        h3p = self.up3(torch.cat([hd, h4], dim=1))
-        h3p = self.self_attention2(h3p)
-        h2p = self.up2(torch.cat([h3p, h3], dim=1))
-        h2p = self.self_attention1(h2p)
-        h1p = self.up1(torch.cat([h2p, h2], dim=1))
-        out = self.out_conv(h1p)
-        out = self.act(out)
-        return out
-        

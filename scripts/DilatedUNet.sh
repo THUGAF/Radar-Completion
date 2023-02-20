@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=3 \
 nohup python -u train.py \
     --data-path /data/gaf/SBandBasicPt \
     --output-path results/DilatedUNet \

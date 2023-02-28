@@ -19,10 +19,10 @@ ANCHOR = [180]
 BLOCKAGE_LEN = [40]
 
 
-def plot_refs(model_names, model_dirs, stage, img_path):
+def plot_ppis(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names) + 1
-    fig = plt.figure(figsize=(num_subplot // 2 * 6, 12), dpi=600)
+    fig = plt.figure(figsize=(num_subplot // 2 * 6, 2 * 6), dpi=600)
     
     truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 1]
     azimuth_size, radial_size = truth.size(0), truth.size(1)
@@ -38,16 +38,16 @@ def plot_refs(model_names, model_dirs, stage, img_path):
         ax = fig.add_subplot(2, num_subplot // 2, i + 1, projection='polar')
         title = 'Truth' if i == 0 else model_names[i - 1]
         ax.grid(False)
-        pm = ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
+        ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
         anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
-        ax.plot(np.ones(radial_size) * (anchor + AZIMUTH_START_POINT) / 180 * np.pi,
+        ax.plot(np.ones(radial_size) * (anchor + AZIMUTH_START_POINT) / 180 * np.pi, 
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
                 '--', color='k', linewidth=1)
-        ax.plot(np.ones(radial_size) * (anchor + blockage_len + AZIMUTH_START_POINT) / 180 * np.pi,
+        ax.plot(np.ones(radial_size) * (anchor + blockage_len + AZIMUTH_START_POINT) / 180 * np.pi, 
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
                 '--', color='k', linewidth=1)
 
-        ax.set_title(title, fontsize=20, loc='left', pad=1)
+        ax.set_title(title, loc='left', fontdict={'size': 20, 'weight': 'bold'})
         ax.set_xlim(AZIMUTH_START_POINT / 180 * np.pi, (AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi)
         ax.set_rlim(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
         ax.set_theta_zero_location('N')
@@ -65,48 +65,44 @@ def plot_refs(model_names, model_dirs, stage, img_path):
     print('{} saved'.format(img_path))
 
 
-def plot_psd(model_names, model_dirs, stage, img_path_1, img_path_2):
-    print('Plotting {} ...'.format(img_path_1))
-    print('Plotting {} ...'.format(img_path_2))
+def plot_psd(model_names, model_dirs, stage, img_path):
+    print('Plotting {} ...'.format(img_path))
     psd_df_radial = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_radial.csv'.format(stage)))
     psd_df_azimuthal = pd.read_csv(os.path.join(model_dirs[0], '{}_psd_azimuthal.csv'.format(stage)))
-    radial_wavelength, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
-    azimuthal_wavelength, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
+    wavelength_radial, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
+    wavelength_azimuthal, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
 
-    fig1 = plt.figure(figsize=(8, 4), dpi=600)
-    fig2 = plt.figure(figsize=(8, 4), dpi=600)
-    ax1 = fig1.add_subplot(1, 1, 1)
-    ax2 = fig2.add_subplot(1, 1, 1)
+    fig = plt.figure(figsize=(8, 8), dpi=600)
+    ax1 = fig.add_subplot(2, 1, 1)
+    ax2 = fig.add_subplot(2, 1, 2)
     
-    ax1.plot(radial_wavelength, truth_psd_radial, color='k')
-    ax2.plot(azimuthal_wavelength, truth_psd_azimuthal, color='k')
+    ax1.plot(wavelength_radial, truth_psd_radial, color='k')
+    ax2.plot(wavelength_azimuthal, truth_psd_azimuthal, color='k')
     legend = ['Truth']
     for i in range(len(model_names)):
         psd_df_radial = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_radial.csv'.format(stage)))
         psd_df_azimuthal = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_azimuthal.csv'.format(stage)))
         pred_psd_radial, pred_psd_azimuthal = psd_df_radial['pred_psd_radial'], psd_df_azimuthal['pred_psd_azimuthal']
-        ax1.plot(radial_wavelength, pred_psd_radial)
-        ax2.plot(azimuthal_wavelength, pred_psd_azimuthal)
+        ax1.plot(wavelength_radial, pred_psd_radial)
+        ax2.plot(wavelength_azimuthal, pred_psd_azimuthal)
         legend.append(model_names[i])
 
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
-    ax1.set_xlabel('Wave Length (km)', fontsize=14)
-    ax1.set_ylabel('Radial power spectral density', fontsize=14)
+    ax1.set_xlabel('Wave Length (km)', fontsize='large')
+    ax1.set_ylabel('Radial power spectral density', fontsize='large')
     ax1.legend(legend)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
-    ax2.set_xlabel('Wave Length (km)', fontsize=14)
-    ax2.set_ylabel('Azimuthal spectral density', fontsize=14)
+    ax2.set_xlabel('Wave Length (deg)', fontsize='large')
+    ax2.set_ylabel('Azimuthal power spectral density', fontsize='large')
     ax2.legend(legend)
 
-    fig1.savefig(img_path_1, bbox_inches='tight')
-    fig2.savefig(img_path_2, bbox_inches='tight')
-    print('{} saved'.format(img_path_1))
-    print('{} saved'.format(img_path_2))
+    fig.savefig(img_path, bbox_inches='tight')
+    print('{} saved'.format(img_path))
 
 
 def plot_radar_polygon(model_names, model_dirs, img_path):
@@ -123,8 +119,8 @@ def plot_radar_polygon(model_names, model_dirs, img_path):
         sample_metrics[0], sample_metrics[1] = sample_metrics[0] / 10, sample_metrics[1] / 10
         metrics = np.concatenate([test_metrics, sample_metrics])
         angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
-        labels = np.append(['${}_t$'.format(j) for j in test_df.columns],
-                           ['${}_s$'.format(j) for j in sample_df.columns])
+        labels = np.append(['${}_{{test}}$'.format(j) for j in test_df.columns],
+                           ['${}_{{sample}}$'.format(j) for j in sample_df.columns])
         metrics = np.append(metrics, metrics[0])
         angles = np.append(angles, angles[0])
         labels = np.append(labels, labels[0])
@@ -135,9 +131,9 @@ def plot_radar_polygon(model_names, model_dirs, img_path):
             ax.plot([angle, angle], [0, 1.2], '-.', lw=0.5, color='black')
         ax.set_thetagrids(angles * 180 / np.pi, labels)
         ax.set_theta_zero_location('N')
+        ax.set_rlabel_position(0)
         ax.spines['polar'].set_visible(False)
         ax.grid(False)
-        ax.set_rlabel_position(0)
         handles.append(h)
     
     fig.legend(labels=model_names, handles=handles)
@@ -148,6 +144,6 @@ def plot_radar_polygon(model_names, model_dirs, img_path):
 if __name__ == '__main__':
     model_names = ['Upper', 'GLCIC', 'UNetppL3', 'UNet', 'DilatedUNet']
     model_dirs = [os.path.join('results', m) for m in model_names]
-    plot_refs(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
-    plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_radial_sample_0.jpg', 'results/psd_azimuthal_sample_0.jpg')
+    plot_ppis(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
+    plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')
     plot_radar_polygon(model_names, model_dirs, 'results/radar_polygon.jpg')

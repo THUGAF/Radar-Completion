@@ -83,7 +83,7 @@ class GLCIC_GAN_Trainer:
                 ref = ref.to(self.args.device)
                 ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
                 masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                    ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                    ref, self.args.azimuth_blockage_range, self.args.seed + i)
                 
                 # discriminator forward
                 input_g = torch.cat([masked_ref, mask], dim=1)
@@ -154,6 +154,12 @@ class GLCIC_GAN_Trainer:
             self.model.eval()
             with torch.no_grad():
                 for i, (t, elev, ref) in enumerate(self.val_loader):
+                    # load data
+                    ref = ref.to(self.args.device)
+                    ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
+                    masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
+                        ref, self.args.azimuth_blockage_range, self.args.seed + i)
+                    
                     # discriminator forward
                     input_g = torch.cat([masked_ref, mask], dim=1)
                     output_g = self.model(input_g)
@@ -163,20 +169,16 @@ class GLCIC_GAN_Trainer:
                     if self.args.azimuth_range[1] - anchor <= self.args.azimuth_blockage_range[1]:
                         anchor = self.args.azimuth_range[1] - self.args.azimuth_blockage_range[1] - 1
                     real_input_ld = maskutils.crop(real_input_gd, ((0, anchor), 
-                                                (self.args.radial_range[1] - self.args.radial_range[0], 
+                                                   (self.args.radial_range[1] - self.args.radial_range[0], 
                                                     self.args.azimuth_blockage_range[1])))
                     fake_input_ld = maskutils.crop(fake_input_gd, ((0, anchor),
-                                                (self.args.radial_range[1] - self.args.radial_range[0],
+                                                   (self.args.radial_range[1] - self.args.radial_range[0],
                                                     self.args.azimuth_blockage_range[1])))
                     real_score = self.model.discriminator(real_input_gd, real_input_ld)
                     fake_score = self.model.discriminator(fake_input_gd, fake_input_ld)
                     loss_d = losses.cal_d_loss(fake_score, real_score)
 
                     # generator forward
-                    fake_input_gd = output_g
-                    fake_input_ld = maskutils.crop(fake_input_gd, ((0, anchor),
-                                                   (self.args.radial_range[1] - self.args.radial_range[0],
-                                                   self.args.azimuth_blockage_range[1])))
                     fake_score = self.model.discriminator(fake_input_gd, fake_input_ld)
                     loss_g = losses.cal_g_loss(fake_score) + \
                         self.args.weight_recon * losses.biased_mae_loss(output_g, ref[:, :1], self.args.vmax, self.args.vmin)
@@ -232,7 +234,7 @@ class GLCIC_GAN_Trainer:
             ref = ref.to(self.args.device)
             ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
             masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                ref, self.args.azimuth_blockage_range, self.args.seed + i)
             
             # discriminator forward
             input_g = torch.cat([masked_ref, mask], dim=1)

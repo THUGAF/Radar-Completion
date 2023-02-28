@@ -1,8 +1,9 @@
 import os
+import random
 import argparse
 import warnings
+import numpy as np
 import torch
-
 from model import *
 from utils.earlystopping import *
 import utils.dataloader as dataloader
@@ -51,20 +52,25 @@ parser.add_argument('--weight-recon', type=float, default=100)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
-parser.add_argument('--random-seed', type=int, default=2023)
+parser.add_argument('--seed', type=int, default=2023)
 
 args = parser.parse_args()
 
 
 def main(args):
-    # fix the random seed
-    torch.manual_seed(args.random_seed)
-    torch.cuda.manual_seed(args.random_seed)
-    torch.cuda.manual_seed_all(args.random_seed)
+    # Fix the random seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
     # Set device
     torch.set_num_threads(args.num_threads)
-    args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    if torch.cuda.is_available():
+        args.device = 'cuda:0'
+        torch.cuda.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+    else:
+        args.device = 'cpu'
 
     # Set the model
     model = eval(args.model)(args)

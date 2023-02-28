@@ -35,9 +35,10 @@ def crop(x: torch.Tensor, area: tuple) -> torch.Tensor:
     * returns:
             A torch tensor of shape (N, C, H, W) cropped in the specified area.
     """
+    out = torch.clone(x)
     xmin, ymin = area[0]
     w, h = area[1]
-    return x[:, :, ymin: ymin + h, xmin: xmin + w]
+    return out[:, :, ymin: ymin + h, xmin: xmin + w]
 
 
 def direct_filling(ref: torch.Tensor, azimuth_start_point: int, anchor: int, 

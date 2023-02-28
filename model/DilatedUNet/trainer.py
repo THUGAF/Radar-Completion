@@ -70,13 +70,13 @@ class DilatedUNet_Trainer:
                 ref = ref.to(self.args.device)
                 ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
                 masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                    ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                    ref, self.args.azimuth_blockage_range, self.args.seed + i)
                 
                 # forward
                 input_ = torch.cat([masked_ref, mask], dim=1)
                 output = self.model(input_)
                 output = masked_ref[:, :1] + output * (1 - mask[:, :1])
-                loss = losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
+                loss = self.args.weight_recon * losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
                 
                 # backward
                 self.optimizer.zero_grad()
@@ -118,13 +118,13 @@ class DilatedUNet_Trainer:
                     ref = ref.to(self.args.device)
                     ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
                     masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                        ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                        ref, self.args.azimuth_blockage_range, self.args.seed + i)
 
                     # forward
                     input_ = torch.cat([masked_ref, mask], dim=1)
                     output = self.model(input_)
                     output = masked_ref[:, :1] + output * (1 - mask[:, :1])
-                    loss = losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
+                    loss = self.args.weight_recon * losses.biased_mae_loss(output, ref[:, :1], self.args.vmax, self.args.vmin)
 
                     # back scaling
                     ref = transform.reverse_minmax_norm(ref, self.args.vmax, self.args.vmin)
@@ -173,7 +173,7 @@ class DilatedUNet_Trainer:
             ref = ref.to(self.args.device)
             ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
             masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                ref, self.args.azimuth_blockage_range, self.args.seed + i)
             
             # forward
             input_ = torch.cat([masked_ref, mask], dim=1)

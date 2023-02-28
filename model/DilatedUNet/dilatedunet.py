@@ -66,9 +66,10 @@ class SelfAttention(nn.Module):
 
 
 class DilatedUNet(nn.Module):
-    def __init__(self, in_channels: int):
+    def __init__(self, args):
         super().__init__()
-        self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
+        input_dim = len(args.elevation_id) * 2
+        self.in_conv = nn.Conv2d(input_dim, 32, kernel_size=1)
         self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
         self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
         self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)

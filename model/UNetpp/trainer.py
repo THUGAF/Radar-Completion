@@ -83,7 +83,7 @@ class UNetpp_GAN_Trainer:
                 ref = ref.to(self.args.device)
                 ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
                 masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                    ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                    ref, self.args.azimuth_blockage_range, self.args.seed + i)
                 
                 # discriminator forward
                 input_g = torch.cat([masked_ref, mask], dim=1)
@@ -143,6 +143,12 @@ class UNetpp_GAN_Trainer:
             self.model.eval()
             with torch.no_grad():
                 for i, (t, elev, ref) in enumerate(self.val_loader):
+                    # load data
+                    ref = ref.to(self.args.device)
+                    ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
+                    masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
+                        ref, self.args.azimuth_blockage_range, self.args.seed + i)
+                    
                     # discriminator forward
                     input_g = torch.cat([masked_ref, mask], dim=1)
                     output_g = self.model(input_g)
@@ -154,7 +160,6 @@ class UNetpp_GAN_Trainer:
                     loss_d = losses.cal_d_loss(fake_score, real_score)
 
                     # generator forward
-                    fake_input_g = torch.cat([output_g, mask[:, :1]], dim=1)
                     fake_score = self.model.discriminator(fake_input_g)
                     loss_g = losses.cal_g_loss(fake_score) + \
                         self.args.weight_recon * losses.biased_mae_loss(output_g, ref[:, :1], self.args.vmax, self.args.vmin)
@@ -210,7 +215,7 @@ class UNetpp_GAN_Trainer:
             ref = ref.to(self.args.device)
             ref = transform.minmax_norm(ref, self.args.vmax, self.args.vmin)
             masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                ref, self.args.azimuth_blockage_range, self.args.random_seed + i)
+                ref, self.args.azimuth_blockage_range, self.args.seed + i)
             
             # discriminator forward
             input_g = torch.cat([masked_ref, mask], dim=1)

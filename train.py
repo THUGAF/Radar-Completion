@@ -3,8 +3,8 @@ import argparse
 import warnings
 import torch
 
-from model.models import *
-from utils.trainer import *
+from model import *
+from utils.earlystopping import *
 import utils.dataloader as dataloader
 
 
@@ -31,7 +31,8 @@ parser.add_argument('--sample-anchor', type=int, nargs='+', default=[0])
 parser.add_argument('--sample-blockage-len', type=int, nargs='+', default=[40])
 
 # model settings
-parser.add_argument('--model', type=str, choices=['GLCIC', 'UNetppL3', 'UNet', 'DilatedUNet'], default='GLCIC')
+parser.add_argument('--model', type=str,
+                    choices=['GLCIC_GAN', 'UNetpp_GAN', 'DilatedUNet'])
 
 # training settings
 parser.add_argument('--pretrain', action='store_true')
@@ -43,7 +44,10 @@ parser.add_argument('--batch-size', type=int, default=4)
 parser.add_argument('--max-iterations', type=int, default=100000)
 parser.add_argument('--start-iterations', type=int, default=0)
 parser.add_argument('--learning-rate', type=float, default=0.001)
+parser.add_argument('--beta1', type=float, default=0.9)
+parser.add_argument('--beta2', type=float, default=0.999)
 parser.add_argument('--weight-decay', type=float, default=0)
+parser.add_argument('--weight-recon', type=float, default=100)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
@@ -63,8 +67,7 @@ def main(args):
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     # Set the model
-    input_dim = len(args.elevation_id) * 2
-    model = eval(args.model)(input_dim)
+    model = eval(args.model)(args)
     model = model.to(args.device)
 
     # Load data
@@ -83,8 +86,14 @@ def main(args):
     if not os.path.exists(args.output_path):
         os.mkdir(args.output_path)
 
-    trainer = Trainer(args)
-    if args.test:
+    if args.model == 'UNetpp_GAN':
+        trainer = UNetpp_GAN_Trainer(args)
+    elif args.model == 'GLCIC_GAN':
+        trainer = GLCIC_GAN_Trainer(args)
+    elif args.model == 'DilatedUNet':
+        trainer = DilatedUNet_Trainer(args)
+
+    if args.train or args.test:
         trainer.fit(model, train_loader, val_loader, test_loader)
     if args.predict:
         trainer.predict(model, sample_loader)

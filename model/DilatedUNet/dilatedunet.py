@@ -2,19 +2,6 @@ import torch
 import torch.nn as nn
 
 
-class UNetppConv2d(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, padding: int = 1):
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding),
-            nn.LeakyReLU(0.2)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = self.conv(x)
-        return out
-
-
 class UNetDoubleConv2d(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 1, 
                  stride: int = 1, dilation: int = 1, padding: int = 0):
@@ -75,4 +62,54 @@ class SelfAttention(nn.Module):
         out = torch.bmm(value, attention.transpose(1, 2))
         out = out.view(batch_size, channels, width, height)
         out = self.gamma * out + x
+        return out
+
+
+class DilatedUNet(nn.Module):
+    def __init__(self, in_channels: int):
+        super().__init__()
+        self.in_conv = nn.Conv2d(in_channels, 32, kernel_size=1)
+        self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
+        self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.dilated_conv1 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        self.dilated_conv2 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=2, padding=2),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        self.dilated_conv3 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=4, padding=4),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        self.dilated_conv4 = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=8, padding=8),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+        self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
+        self.act = nn.Sigmoid()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h1 = self.in_conv(x)
+        h2 = self.down1(h1)
+        h3 = self.down2(h2)
+        h4 = self.down3(h3)
+        hd = self.dilated_conv1(h4)
+        hd = self.dilated_conv2(hd)
+        hd = self.dilated_conv3(hd)
+        hd = self.dilated_conv4(hd)
+        h3p = self.up3(torch.cat([hd, h4], dim=1))
+        h2p = self.up2(torch.cat([h3p, h3], dim=1))
+        h1p = self.up1(torch.cat([h2p, h2], dim=1))
+        out = self.out_conv(torch.cat([h1p, h1], dim=1))
+        out = self.act(out)
         return out

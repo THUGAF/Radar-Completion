@@ -4,7 +4,7 @@ nohup python -u baseline.py \
     --test \
     --predict \
     --elevation-id 1 2 3 \
-    --batch-size 8 \
+    --batch-size 16 \
     --num-threads 8 \
     --num-workers 8 \
     --sample-index 14403 \

@@ -26,14 +26,15 @@ def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, output_path: str, fi
     plt.close(fig)
 
 
-def plot_ref(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: float, radial_start_point: float, 
+def save_tensor(tensor: torch.Tensor, root: str, stage: str):
+    # save tensor
+    tensor = tensor.detach().cpu()
+    torch.save(tensor, '{}/{}.pt'.format(root, stage))
+
+
+def plot_ppi(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: float, radial_start_point: float, 
              anchor: int, blockage_len: int, root: str, stage: str):
     print('Plotting tensors...')
-    
-    # save tensor
-    tensors = tensors.detach().cpu()
-    torch.save(tensors, '{}/{}.pt'.format(root, stage))
-
     # plot the long image
     num_rows, num_cols = tensors.size(0), tensors.size(1)
     azimuth_size, radial_size = tensors.size(2), tensors.size(3)

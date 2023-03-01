@@ -15,7 +15,7 @@ nohup python -u train.py \
     --learning-rate 1e-4 \
     --beta1 0.5 \
     --weight-decay 1e-6 \
-    --weight-recon 100 \
+    --weight-recon 10 \
     --sample-index 14403 \
     --sample-anchor 180 \
     --sample-blockage-len 40 \

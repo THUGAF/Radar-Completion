@@ -1,10 +1,10 @@
 CUDA_VISIBLE_DEVICES=1 \
 nohup python -u train.py \
-    --data-path /data/gaf/SBandBasicPt \
-    --output-path results/DilatedUNet \
     --train \
     --test \
     --predict \
+    --data-path /data/gaf/SBandBasicPt \
+    --output-path results/DilatedUNet \
     --model DilatedUNet \
     --elevation-id 1 2 3 \
     --max-iterations 100000 \

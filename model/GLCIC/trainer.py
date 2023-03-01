@@ -32,7 +32,7 @@ class GLCIC_GAN_Trainer:
         self.optimizer_g = Adam(self.model.generator.parameters(), lr=self.args.learning_rate,
                                 betas=(self.args.beta1, self.args.beta2),
                                 weight_decay=self.args.weight_decay)
-        self.optimizer_d = Adam(self.model.discriminator.parameters(), lr=self.args.learning_rate / 2,
+        self.optimizer_d = Adam(self.model.discriminator.parameters(), lr=self.args.learning_rate * 2,
                                 betas=(self.args.beta1, self.args.beta2),
                                 weight_decay=1)
 
@@ -227,7 +227,8 @@ class GLCIC_GAN_Trainer:
         metrics['COSSIM'] = []
         
         print('\n[Test]')
-        self.model.load_state_dict(self.load_checkpoint('bestmodel.pth')['model'])
+        self.model.generator.load_state_dict(self.load_checkpoint('bestmodel.pth')['model'])
+        self.model.discriminator.load_state_dict(self.load_checkpoint('bestmodel.pth')['discriminator'])
         self.model.eval()
         
         for i, (t, elev, ref) in enumerate(self.test_loader):
@@ -275,7 +276,8 @@ class GLCIC_GAN_Trainer:
     @torch.no_grad()
     def predict(self, model, sample_loader):
         print('\n[Predict]')
-        model.load_state_dict(self.load_checkpoint('bestmodel.pth')['model'])
+        model.generator.load_state_dict(self.load_checkpoint('bestmodel.pth')['model'])
+        model.discriminator.load_state_dict(self.load_checkpoint('bestmodel.pth')['discriminator'])
         model.eval()
         
         for i, (t, elev, ref) in enumerate(sample_loader):

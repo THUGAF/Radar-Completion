@@ -36,8 +36,9 @@ def plot_ppi(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
              anchor: int, blockage_len: int, root: str, stage: str):
     print('Plotting tensors...')
     # plot the long image
-    num_rows, num_cols = tensors.size(0), tensors.size(1)
-    azimuth_size, radial_size = tensors.size(2), tensors.size(3)
+    tensors = tensors.detach().cpu().numpy()
+    num_rows, num_cols = tensors.shape[0], tensors.shape[1]
+    azimuth_size, radial_size = tensors.shape[2], tensors.shape[3]
     thetas = np.arange(azimuth_start_point, azimuth_start_point + azimuth_size) / 180 * np.pi
     rhos = np.arange(radial_start_point, radial_start_point + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)
@@ -45,7 +46,7 @@ def plot_ppi(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
     for r in range(num_rows):
         for c in range(num_cols):
             ax = fig.add_subplot(num_rows, num_cols, r * num_cols + c + 1, projection='polar')
-            pm = ax.pcolormesh(thetas, rhos, tensors[r, c].T, cmap=CMAP, norm=NORM)
+            ax.pcolormesh(thetas, rhos, tensors[r, c].T, cmap=CMAP, norm=NORM)
             ax.plot(np.ones(radial_size) * (anchor + azimuth_start_point) / 180 * np.pi,
                     np.arange(radial_start_point, radial_start_point + radial_size), 
                     '--', color='k', linewidth=1)
@@ -71,9 +72,9 @@ def plot_ppi(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
 
 
 def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, blockage_len: int, root: str, stage: str):
-    tensors = tensors.detach().cpu()
-    radial_size = tensors.size(3)
-    pred, truth = tensors[0, 0].numpy(), tensors[0, 1].numpy()
+    tensors = tensors.detach().cpu().numpy()
+    radial_size = tensors.shape[3]
+    pred, truth = tensors[0, 0], tensors[0, 1]
     thetas = np.arange(anchor, anchor + blockage_len) / 180 * np.pi
     rhos = np.arange(radial_start_point, radial_start_point + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)

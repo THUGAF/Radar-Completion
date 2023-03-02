@@ -32,9 +32,9 @@ class GLCIC_GAN_Trainer:
         self.optimizer_g = Adam(self.model.generator.parameters(), lr=self.args.learning_rate,
                                 betas=(self.args.beta1, self.args.beta2),
                                 weight_decay=self.args.weight_decay)
-        self.optimizer_d = Adam(self.model.discriminator.parameters(), lr=self.args.learning_rate * 2,
+        self.optimizer_d = Adam(self.model.discriminator.parameters(), lr=self.args.learning_rate,
                                 betas=(self.args.beta1, self.args.beta2),
-                                weight_decay=1)
+                                weight_decay=self.args.weight_decay)
 
         if self.args.train:
             self.train()

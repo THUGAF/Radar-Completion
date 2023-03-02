@@ -15,14 +15,14 @@ NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), CMAP.N)
 
 AZIMUTH_START_POINT = 0
 RADIAL_START_POINT = 0
-ANCHOR = [180]
+ANCHOR = [160]
 BLOCKAGE_LEN = [40]
 
 
 def plot_ppis(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names) + 1
-    fig = plt.figure(figsize=(num_subplot // 2 * 6, 2 * 6), dpi=600)
+    fig = plt.figure(figsize=(num_subplot * 6, 6), dpi=600)
     
     truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 1]
     azimuth_size, radial_size = truth.size(0), truth.size(1)
@@ -35,7 +35,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
             tensor = truth
         else:
             tensor = torch.load(os.path.join(model_dirs[i - 1], '{}.pt'.format(stage)))[0, 0]
-        ax = fig.add_subplot(2, num_subplot // 2, i + 1, projection='polar')
+        ax = fig.add_subplot(1, num_subplot, i + 1, projection='polar')
         title = 'Truth' if i == 0 else model_names[i - 1]
         ax.grid(False)
         ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
@@ -56,7 +56,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
         ax.tick_params(labelsize=16)
     
     fig.subplots_adjust(right=0.90)
-    cax = fig.add_axes([0.94, 0.14, 0.012, 0.72])
+    cax = fig.add_axes([0.92, 0.14, 0.008, 0.72])
     cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical')
     cbar.set_label('dBZ', fontsize=20)
     cbar.ax.tick_params(labelsize=18)
@@ -142,8 +142,8 @@ def plot_radar_polygon(model_names, model_dirs, img_path):
 
 
 if __name__ == '__main__':
-    model_names = ['Upper', 'GLCIC', 'UNetppL3', 'UNet', 'DilatedUNet']
-    model_dirs = [os.path.join('results', m) for m in model_names]
+    model_names = ['Upper', 'GLCIC', 'UNet++ GAN', 'Dilated UNet']
+    model_dirs = ['results/Upper', 'results/GLCIC_GAN', 'results/UNetpp_GAN', 'results/DilatedUNet']
     plot_ppis(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
-    plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')
-    plot_radar_polygon(model_names, model_dirs, 'results/radar_polygon.jpg')
+    # plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')
+    # plot_radar_polygon(model_names, model_dirs, 'results/radar_polygon.jpg')

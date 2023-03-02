@@ -7,8 +7,8 @@ nohup python -u baseline.py \
     --batch-size 16 \
     --num-threads 8 \
     --num-workers 8 \
-    --sample-index 14403 \
-    --sample-anchor 180 \
+    --sample-index 15451 \
+    --sample-anchor 160 \
     --sample-blockage-len 40 \
     --display-interval 50 \
     > results/upper.log 2>&1 &

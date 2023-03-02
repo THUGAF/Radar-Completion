@@ -90,7 +90,7 @@ class UNetpp_GAN(nn.Module):
     def __init__(self, args):
         super().__init__()
         input_dim = len(args.elevation_id) * 2
-        self.generator = UNetpp_Generator(input_dim, base_channels=64)
+        self.generator = UNetpp_Generator(input_dim, base_channels=32)
         self.discriminator = UNetpp_Discriminator(
             in_channels=2,
             base_channels=64,

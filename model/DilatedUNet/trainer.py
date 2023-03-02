@@ -36,6 +36,7 @@ class DilatedUNet_Trainer:
             self.test()
     
     def train(self):
+        self.count_params()
         # Pretrain: Load model and optimizer
         if self.args.pretrain:
             states = self.load_checkpoint()

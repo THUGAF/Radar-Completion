@@ -13,11 +13,10 @@ nohup python -u train.py \
     --num-threads 8 \
     --num-workers 8 \
     --learning-rate 1e-4 \
-    --beta1 0.5 \
-    --weight-decay 1e-6 \
-    --weight-recon 10 \
-    --sample-index 14403 \
-    --sample-anchor 180 \
+    --weight-decay 1e-2 \
+    --weight-recon 100 \
+    --sample-index 15451 \
+    --sample-anchor 160 \
     --sample-blockage-len 40 \
     --display-interval 50 \
     > results/UNetpp_GAN.log 2>&1 &

@@ -224,6 +224,7 @@ class GLCIC_GAN_Trainer:
         metrics = {}
         metrics['MAE'] = []
         metrics['RMSE'] = []
+        metrics['MBE'] = []
         metrics['COSSIM'] = []
         
         print('\n[Test]')

@@ -164,6 +164,7 @@ class DilatedUNet_Trainer:
         metrics = {}
         metrics['MAE'] = []
         metrics['RMSE'] = []
+        metrics['MBE'] = []
         metrics['COSSIM'] = []
         
         print('\n[Test]')

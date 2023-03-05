@@ -18,6 +18,7 @@ class BaselineTester:
         metrics = {}
         metrics['MAE'] = []
         metrics['RMSE'] = []
+        metrics['MBE'] = []
         metrics['COSSIM'] = []
         
         print('\n[Test]')
@@ -39,10 +40,12 @@ class BaselineTester:
             # evaluation
             metrics['MAE'].append(evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1]))
             metrics['RMSE'].append(evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1]))
+            metrics['MBE'].append(evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1]))
             metrics['COSSIM'].append(evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1]))
 
         metrics['MAE'].append(np.mean(metrics['MAE'], axis=0))
         metrics['RMSE'].append(np.mean(metrics['RMSE'], axis=0))
+        metrics['MBE'].append(np.mean(metrics['MBE'], axis=0))
         metrics['COSSIM'].append(np.mean(metrics['COSSIM'], axis=0))
 
         df = pd.DataFrame(data=metrics)
@@ -79,6 +82,7 @@ class BaselineTester:
             # evaluation
             metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
             metrics['RMSE'] = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+            metrics['MBE'] = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
             metrics['COSSIM'] = evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
 
             df = pd.DataFrame(data=metrics, index=['MAE'])

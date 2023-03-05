@@ -93,6 +93,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xlabel('Wave Length (km)', fontsize='large')
     ax1.set_ylabel('Radial power spectral density', fontsize='large')
     ax1.legend(legend)
+    ax1.text(-0.05, 1.05, '(a)', fontsize=18, transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
@@ -100,6 +101,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax2.set_xlabel('Wave Length (deg)', fontsize='large')
     ax2.set_ylabel('Azimuthal power spectral density', fontsize='large')
     ax2.legend(legend)
+    ax2.text(-0.05, 1.05, '(b)', fontsize=18, transform=ax2.transAxes)
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -141,8 +143,40 @@ def plot_radar_polygon(model_names, model_dirs, img_path):
     print('{} saved'.format(img_path))
 
 
+def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
+    print('Plotting {} ...'.format(img_path))
+    metrics = []
+    num_models = len(model_names)
+    for i in range(num_models):
+        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)))
+        metrics.append(df.values)
+    metrics = np.concatenate(metrics)
+    labels = df.columns.values
+
+    fig = plt.figure(figsize=(7, 4), dpi=600)
+    ax1 = fig.add_subplot(1, 1, 1)
+    x = np.arange(labels.shape[0])
+    width = 0.2
+    for i in range(num_models):
+        ax1.bar((x + width * (i - (num_models - 1) / 2))[:-1], metrics[i, :-1], width,
+                label=model_names[i])
+    ax1.axhline(xmax=0.8, color='k', linestyle='--')
+    ax1.set_xticks(x, labels=labels)
+    ax1.set_ylabel('Error (dBZ)')
+
+    ax2 = ax1.twinx()
+    for i in range(num_models):
+        ax2.bar((x + width * (i - (num_models - 1) / 2))[-1], metrics[i, -1], width,
+                label=model_names[i])
+    ax2.set_ylabel('Similarity')
+    ax2.legend(model_names, fontsize=8)
+
+    fig.savefig(img_path, bbox_inches='tight')
+    print('{} saved'.format(img_path))
+
+
 if __name__ == '__main__':
-    model_names = ['Upper', 'GLCIC', 'UNet++ GAN', 'Dilated UNet']
+    model_names = ['Upper', 'GLCIC', 'UNet++ GAN', 'D-UNet (Ours)']
     model_dirs = ['results/Upper', 'results/GLCIC_GAN', 'results/UNetpp_GAN', 'results/DilatedUNet']
-    plot_ppis(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
+    # plot_ppis(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
     plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')

@@ -18,6 +18,14 @@ def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -
     return rmse
 
 
+def evaluate_mbe(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
+    assert pred.size() == truth.size()
+    pred, truth = pred.cpu(), truth.cpu()
+    mask = torch.logical_not(mask.bool())
+    mbe = torch.mean(pred[mask] - truth[mask]).item()
+    return mbe
+
+
 def evaluate_cossim(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()

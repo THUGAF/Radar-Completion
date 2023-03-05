@@ -145,5 +145,4 @@ if __name__ == '__main__':
     model_names = ['Upper', 'GLCIC', 'UNet++ GAN', 'Dilated UNet']
     model_dirs = ['results/Upper', 'results/GLCIC_GAN', 'results/UNetpp_GAN', 'results/DilatedUNet']
     plot_ppis(model_names, model_dirs, 'sample_0', 'results/ppi_sample_0.jpg')
-    # plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')
-    # plot_radar_polygon(model_names, model_dirs, 'results/radar_polygon.jpg')
+    plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')

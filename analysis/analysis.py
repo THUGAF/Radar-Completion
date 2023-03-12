@@ -149,7 +149,7 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     num_models = len(model_names)
     for i in range(num_models):
         df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)))
-        metrics.append(df.values)
+        metrics.append(df.iloc[-1].values)
     metrics = np.concatenate(metrics)
     labels = df.columns.values
 
@@ -175,6 +175,19 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     print('{} saved'.format(img_path))
 
 
+def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str):
+    print('Saving {} ...'.format(file_path))
+    metrics = []
+    num_models = len(model_names)
+    for i in range(num_models):
+        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)))
+        metrics.append(df.iloc[-1].values)
+    metrics = np.stack(metrics)
+    new_df = pd.DataFrame(metrics, index=model_names, columns=df.columns)
+    new_df.to_csv(file_path, float_format='%.4f')
+    print('{} saved'.format(file_path))
+
+
 if __name__ == '__main__':
     model_names = ['Upper', 'GLCIC', 'UNet++ GAN', 'D-UNet (Ours)']
     model_dirs = ['results/Upper', 'results/GLCIC_GAN', 'results/UNetpp_GAN', 'results/DilatedUNet']
@@ -182,3 +195,5 @@ if __name__ == '__main__':
     plot_psd(model_names, model_dirs, 'sample_0', 'results/psd_sample_0.jpg')
     plot_bars(model_names, model_dirs, 'sample_0', 'results/bar_sample_0.jpg')
     plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
+    save_metrics(model_names, model_dirs, 'sample_0', 'results/sample_0_metrics.csv')
+    save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.csv')

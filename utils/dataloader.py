@@ -106,13 +106,13 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
     test_loader = DataLoader(test_set, batch_size=batch_size, num_workers=num_workers,
                              shuffle=False, drop_last=True, pin_memory=True)
 
-    print('Total dataset length: ', dataset_size)
-    print('\nTrain Loader')
-    print('----Batch Num:', len(train_loader))
-    print('\nVal Loader')
-    print('----Batch Num:', len(val_loader))
-    print('\nTest Loader')
-    print('----Batch Num:', len(test_loader))
+    print('\nDataset Length:', len(dataset))
+    print('Train Set Length:', len(train_set))
+    print('Val Set Length:', len(val_set))
+    print('Test Set Length:', len(test_set))
+    print('Train Loader Batch Num:', len(train_loader))
+    print('Val Loader Batch Num:', len(val_loader))
+    print('Test Loader Batch Num:', len(test_loader))
 
     return train_loader, val_loader, test_loader
 

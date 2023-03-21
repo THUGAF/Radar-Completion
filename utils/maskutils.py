@@ -23,22 +23,8 @@ def gen_fixed_blockage_mask(ref: torch.Tensor, azimuth_start_point: int, anchor:
     return masked_tensor, mask, anchor, blockage_len
 
 
-def crop(x: torch.Tensor, area: tuple) -> torch.Tensor:
-    """
-    * inputs:
-        - x (torch.Tensor, required)
-                A torch tensor of shape (N, C, H, W) is assumed.
-        - area (sequence, required)
-                A sequence of length 2 ((X, Y), (W, H)) is assumed.
-                sequence[0] (X, Y) is the left corner of an area to be cropped.
-                sequence[1] (W, H) is its width and height.
-    * returns:
-            A torch tensor of shape (N, C, H, W) cropped in the specified area.
-    """
-    out = torch.clone(x)
-    xmin, ymin = area[0]
-    w, h = area[1]
-    return out[:, :, ymin: ymin + h, xmin: xmin + w]
+def crop(x: torch.Tensor, xmin: int, ymin: int, w: int, h: int) -> torch.Tensor:
+    return x[:, :, ymin: ymin + h, xmin: xmin + w]
 
 
 def direct_filling(ref: torch.Tensor, azimuth_start_point: int, anchor: int, 

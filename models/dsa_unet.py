@@ -65,35 +65,38 @@ class SelfAttention(nn.Module):
         return out
 
 
-class DilatedUNet(nn.Module):
-    def __init__(self, args):
+class DSA_UNet(nn.Module):
+    def __init__(self, input_dim):
         super().__init__()
-        input_dim = len(args.elevation_id) * 2
         self.in_conv = nn.Conv2d(input_dim, 32, kernel_size=1)
         self.down1 = UNetDoubleConv2d(32, 64, kernel_size=3, stride=2, padding=1)
         self.down2 = UNetDoubleConv2d(64, 128, kernel_size=3, stride=2, padding=1)
         self.down3 = UNetDoubleConv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.down4 = UNetDoubleConv2d(256, 512, kernel_size=3, stride=2, padding=1)
         self.dilated_conv1 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True)
         )
         self.dilated_conv2 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=2, padding=2),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, dilation=2, padding=2),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True)
         )
         self.dilated_conv3 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=4, padding=4),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, dilation=4, padding=4),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True)
         )
         self.dilated_conv4 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, dilation=8, padding=8),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, dilation=8, padding=8),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True)
         )
+        self.up4 = UNetDoubleDeconv2d(1024, 256, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.attn4 = SelfAttention(256)
         self.up3 = UNetDoubleDeconv2d(512, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
+        self.attn3 = SelfAttention(128)
         self.up2 = UNetDoubleDeconv2d(256, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.up1 = UNetDoubleDeconv2d(128, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.out_conv = nn.Conv2d(64, 1, kernel_size=1)
@@ -104,11 +107,15 @@ class DilatedUNet(nn.Module):
         h2 = self.down1(h1)
         h3 = self.down2(h2)
         h4 = self.down3(h3)
-        hd = self.dilated_conv1(h4)
+        h5 = self.down4(h4)
+        hd = self.dilated_conv1(h5)
         hd = self.dilated_conv2(hd)
         hd = self.dilated_conv3(hd)
         hd = self.dilated_conv4(hd)
-        h3p = self.up3(torch.cat([hd, h4], dim=1))
+        h4p = self.up4(torch.cat([hd, h5], dim=1))
+        h4p = self.attn4(h4p)
+        h3p = self.up3(torch.cat([h4p, h4], dim=1))
+        h3p = self.attn3(h3p)
         h2p = self.up2(torch.cat([h3p, h3], dim=1))
         h1p = self.up1(torch.cat([h2p, h2], dim=1))
         out = self.out_conv(torch.cat([h1p, h1], dim=1))

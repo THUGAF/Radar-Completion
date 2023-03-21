@@ -10,14 +10,15 @@ class TrainingDataset(Dataset):
     Args:
         root (str): Root directory for the dataset. 
         elevation_id (int or List[int]): ID of elevations.
-        azimuth_range (List[int]): Range of azimuth. 
+        azimuthal_range (List[int]): Range of azimuth. 
         radial_range (List[int]): Range of radial distance. 
         
     """
-    def __init__(self, root: str, elevation_id: Union[int, List[int]], azimuth_range: List[int], radial_range: List[int]):
+    def __init__(self, root: str, elevation_id: Union[int, List[int]], 
+                 azimuthal_range: List[int], radial_range: List[int]):
         super().__init__()
         self.elevation_id = elevation_id
-        self.azimuth_range = azimuth_range
+        self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
         self.files = []
         date_list = sorted(os.listdir(root))
@@ -26,41 +27,43 @@ class TrainingDataset(Dataset):
             for file_ in file_list:
                 self.files.append(os.path.join(root, date, file_))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         filename = self.files[index]
         t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
-        ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
+        ref = ref[:, self.azimuthal_range[0]: self.azimuthal_range[1], 
+                  self.radial_range[0]: self.radial_range[1]]
         return t, elev, ref
     
     def __len__(self):
         return len(self.files)
 
 
-class SampleDataset(TrainingDataset):
+class CaseDataset(TrainingDataset):
     """Customized dataset.
 
     Args:
         root (str): Root directory for the dataset.
-        sample_index (int): Index of the sample. Default is None, meaning the last sample is selected.
+        case_index (int): Index of the case. Default is None, meaning the last case is selected.
         elevation_id (int or List[int]): ID of elevations.
         azimuth_range (List[int]): Range of azimuth. 
         radial_range (List[int]): Range of radial distance. 
     """
 
-    def __init__(self, root: str, sample_index: int, elevation_id: Union[int, List[int]], 
-                 azimuth_range: List[int], radial_range: List[int]):
-        super().__init__(root, elevation_id, azimuth_range, radial_range)
-        self.sample_index = sample_index
+    def __init__(self, root: str, case_index: int, elevation_id: Union[int, List[int]], 
+                 azimuthal_range: List[int], radial_range: List[int]):
+        super().__init__(root, elevation_id, azimuthal_range, radial_range)
+        self.case_index = case_index
         self.elevation_id = elevation_id
-        self.azimuth_range = azimuth_range
+        self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
         
     def __getitem__(self, index: int):
-        filename = self.files[self.sample_index[index]]
+        filename = self.files[self.case_index[index]]
         t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
-        ref = ref[:, self.azimuth_range[0]: self.azimuth_range[1], self.radial_range[0]: self.radial_range[1]]
+        ref = ref[:, self.azimuthal_range[0]: self.azimuthal_range[1], 
+                  self.radial_range[0]: self.radial_range[1]]
         return t, elev, ref
 
     def __len__(self):
@@ -68,9 +71,9 @@ class SampleDataset(TrainingDataset):
 
 
 def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, valid_ratio: float, 
-              elevation_id: Union[int, List[int]] = 0, azimuth_range: List[int] = [0, 360], 
+              elevation_id: Union[int, List[int]] = 0, azimuthal_range: List[int] = [0, 360], 
               radial_range: List[int] = [0, 460]) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    r"""Load training and test data.
+    """Load training and test data.
 
     Args:
         root (str): Path to the dataset.
@@ -79,14 +82,14 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
         train_ratio (float): Training ratio of the whole dataset.
         valid_ratio (float): Validation ratio of the whole dataset.
         elevation_id (int or List[int]): ID of elevations. Default: 0
-        azimuth_range (List[int]): Range of azimuth. Default: [0, 360]
+        azimuthal_range (List[int]): Range of azimuth. Default: [0, 360]
         radial_range (List[int]): Range of radial distance. Default: [0, 460]
     
     Returns:
         DataLoader: Dataloader for training and test.
     """
 
-    dataset = TrainingDataset(root, elevation_id, azimuth_range, radial_range)
+    dataset = TrainingDataset(root, elevation_id, azimuthal_range, radial_range)
 
     dataset_size = len(dataset)
     indices = list(range(dataset_size))
@@ -117,21 +120,21 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
     return train_loader, val_loader, test_loader
 
 
-def load_sample(root: str, sample_index: int = -1, elevation_id: Union[int, List[int]] = 0, 
-                azimuth_range: List[int] = [0, 360], radial_range: List[int] = [0, 460]) -> DataLoader:
-    r"""Load sample data.
+def load_case(root: str, case_indices: List[int], elevation_id: Union[int, List[int]] = 0, 
+              azimuthal_range: List[int] = [0, 360], radial_range: List[int] = [0, 460]) -> DataLoader:
+    """Load case data.
 
     Args:
         root (str): Path to the dataset.
-        sample_index (int): Index of the sample. Default is -1, meaning the last sample is selected.
+        case_indices (int): Indices of the cases.
         elevation_id (int or List[int]): ID of elevations. Default: 0
-        azimuth_range (List[int]): Range of azimuth. Default: [0, 360]
+        azimuthal_range (List[int]): Range of azimuth. Default: [0, 360]
         radial_range (List[int]): Range of radial distance. Default: [0, 460]
     
     Returns:
-        DataLoader: Dataloader for sample.
+        DataLoader: Dataloader for case.
     """
 
-    sample_set = SampleDataset(root, sample_index, elevation_id, azimuth_range, radial_range)
-    sample_loader = DataLoader(sample_set, batch_size=1)
-    return sample_loader
+    case_set = CaseDataset(root, case_indices, elevation_id, azimuthal_range, radial_range)
+    case_loader = DataLoader(case_set, batch_size=1)
+    return case_loader

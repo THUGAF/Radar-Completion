@@ -15,7 +15,7 @@ CMAP = pcolors.ListedColormap(['#ffffff', '#2aedef', '#1caff4', '#0a22f4', '#29f
 NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), CMAP.N)
 
 
-def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, output_path: str, filename: str = 'loss.png'):
+def plot_loss(train_loss: np.ndarray, val_loss: np.ndarray, output_path: str, filename: str):
     fig = plt.figure(figsize=(6, 4), dpi=600)
     ax = plt.subplot(111)
     ax.plot(range(1, len(train_loss) + 1), train_loss, 'b')
@@ -64,11 +64,11 @@ def plot_ppi(tensors: torch.Tensor, current_datetime: str, azimuth_start_point: 
 
     fig.subplots_adjust(right=0.9, wspace=0.3, hspace=0.3)
     cax = fig.add_axes([0.95, 0.2, 0.005 * num_rows, 0.6])
-    cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical', extend='both')
+    cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, aspect=30)
     cbar.set_label('dBZ', fontsize=14)
     cbar.ax.tick_params(labelsize=14)
 
-    fig.savefig('{}/{}.png'.format(root, stage), bbox_inches='tight')
+    fig.savefig('{}/{}.jpg'.format(root, stage), bbox_inches='tight')
 
 
 def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, blockage_len: int, root: str, stage: str):
@@ -132,5 +132,5 @@ def plot_psd(tensors: torch.Tensor, radial_start_point: float, anchor: int, bloc
     ax2.set_ylabel('Azimuthal Power Spectral Density', fontsize=14)
     ax2.legend(['Prediction', 'Truth'])
 
-    fig1.savefig('{}/{}_psd_radial.png'.format(root, stage), bbox_inches='tight')
-    fig2.savefig('{}/{}_psd_azimuthal.png'.format(root, stage), bbox_inches='tight')
+    fig1.savefig('{}/{}_psd_radial.jpg'.format(root, stage), bbox_inches='tight')
+    fig2.savefig('{}/{}_psd_azimuthal.jpg'.format(root, stage), bbox_inches='tight')

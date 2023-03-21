@@ -200,7 +200,7 @@ class GLCIC_ContextDiscriminator(nn.Module):
         return out
 
 
-class GLCIC_GAN(nn.Module):
+class GLCIC(nn.Module):
     def __init__(self, args):
         super().__init__()
         input_dim = len(args.elevation_id) * 2

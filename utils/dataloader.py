@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 import os
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, Subset, random_split
 
@@ -12,10 +13,11 @@ class TrainingDataset(Dataset):
         elevation_id (int or List[int]): ID of elevations.
         azimuthal_range (List[int]): Range of azimuth. 
         radial_range (List[int]): Range of radial distance. 
-        
+        augment_ratio (int): Ratio for data augment. Default: 1.
     """
-    def __init__(self, root: str, elevation_id: Union[int, List[int]], 
-                 azimuthal_range: List[int], radial_range: List[int]):
+
+    def __init__(self, root: str, elevation_id: Union[int, List[int]], azimuthal_range: List[int], 
+                 radial_range: List[int], augment_ratio: int = 1):
         super().__init__()
         self.elevation_id = elevation_id
         self.azimuthal_range = azimuthal_range
@@ -26,6 +28,10 @@ class TrainingDataset(Dataset):
             file_list = sorted(os.listdir(os.path.join(root, date)))
             for file_ in file_list:
                 self.files.append(os.path.join(root, date, file_))
+        self.files = self.files * augment_ratio
+        if augment_ratio > 1:
+            self.files = np.reshape(self.files, (augment_ratio, -1))
+            self.files = self.files.transpose().ravel().tolist()
 
     def __getitem__(self, index: int):
         filename = self.files[index]
@@ -39,7 +45,7 @@ class TrainingDataset(Dataset):
         return len(self.files)
 
 
-class CaseDataset(TrainingDataset):
+class CaseDataset(TrainingDataset): 
     """Customized dataset.
 
     Args:
@@ -72,7 +78,7 @@ class CaseDataset(TrainingDataset):
 
 def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, valid_ratio: float, 
               elevation_id: Union[int, List[int]] = 0, azimuthal_range: List[int] = [0, 360], 
-              radial_range: List[int] = [0, 460]) -> Tuple[DataLoader, DataLoader, DataLoader]:
+              radial_range: List[int] = [0, 460], augment_ratio: int = 1) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Load training and test data.
 
     Args:
@@ -84,12 +90,13 @@ def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, 
         elevation_id (int or List[int]): ID of elevations. Default: 0
         azimuthal_range (List[int]): Range of azimuth. Default: [0, 360]
         radial_range (List[int]): Range of radial distance. Default: [0, 460]
-    
+        augment_ratio (int): Ratio for data augment. Default: 1.
+
     Returns:
         DataLoader: Dataloader for training and test.
     """
 
-    dataset = TrainingDataset(root, elevation_id, azimuthal_range, radial_range)
+    dataset = TrainingDataset(root, elevation_id, azimuthal_range, radial_range, augment_ratio)
 
     dataset_size = len(dataset)
     indices = list(range(dataset_size))

@@ -47,6 +47,7 @@ parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 parser.add_argument('--predict', action='store_true')
 parser.add_argument('--early-stopping', action='store_true')
+parser.add_argument('--augment-ratio', type=int, default=1)
 parser.add_argument('--batch-size', type=int, default=4)
 parser.add_argument('--max-iterations', type=int, default=100000)
 parser.add_argument('--start-iterations', type=int, default=0)
@@ -99,7 +100,7 @@ def main(args):
     if args.train or args.test:
         train_loader, val_loader, test_loader = dataloader.load_data(
             args.data_path, args.batch_size, args.num_workers, args.train_ratio, args.valid_ratio, 
-            args.elevation_id, args.azimuthal_range, args.radial_range)
+            args.elevation_id, args.azimuthal_range, args.radial_range, args.augment_ratio)
 
     # Train, test, and predict
     print('\n### Start tasks ###')

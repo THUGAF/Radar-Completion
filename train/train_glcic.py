@@ -47,6 +47,7 @@ parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 parser.add_argument('--predict', action='store_true')
 parser.add_argument('--early-stopping', action='store_true')
+parser.add_argument('--augment-ratio', type=int, default=1)
 parser.add_argument('--batch-size', type=int, default=4)
 parser.add_argument('--max-iterations', type=int, default=100000)
 parser.add_argument('--start-iterations', type=int, default=0)
@@ -98,7 +99,7 @@ def main(args):
     if args.train or args.test:
         train_loader, val_loader, test_loader = dataloader.load_data(
             args.data_path, args.batch_size, args.num_workers, args.train_ratio, args.valid_ratio,
-            args.elevation_id, args.azimuthal_range, args.radial_range)
+            args.elevation_id, args.azimuthal_range, args.radial_range, args.augment_ratio)
 
     # Train, test, and predict
     print('\n### Start tasks ###')
@@ -139,7 +140,7 @@ def save_checkpoint(filename: str, current_iteration: int, train_loss_g: list, t
         'optimizer_g': optimizer_g.state_dict(),
         'optimizer_d': optimizer_d.state_dict()
     }
-    torch.save(states, os.path.join(args.output_path, filename))
+    torch.save(states, filename)
 
 
 def load_checkpoint(filename: str, device: str):
@@ -195,9 +196,9 @@ def g_loss(fake_score: torch.Tensor, loss_func=nn.BCELoss()) -> torch.Tensor:
 
 
 def pad_azimuth(ref: torch.Tensor, width: int = 20) -> torch.Tensor:
-    start_pad = ref[:, -width:]
-    end_pad = ref[:, :width]
-    ref = torch.cat([start_pad, ref, end_pad], dim=1)
+    start_pad = ref[:, :, -width:]
+    end_pad = ref[:, :, :width]
+    ref = torch.cat([start_pad, ref, end_pad], dim=2)
     return ref
 
 
@@ -235,8 +236,6 @@ def train(model: nn.Module, optimizer_g: optim.Optimizer, optimizer_d: optim.Opt
     print('Total epochs:', total_epochs)
 
     for epoch in range(start_epoch, total_epochs):
-        print('\n[Train]')
-        print('Epoch: [{}][{}]'.format(epoch + 1, total_epochs))
         train_loss_g_epoch = 0
         train_loss_d_epoch = 0
         val_loss_g_epoch = 0
@@ -298,8 +297,8 @@ def train(model: nn.Module, optimizer_g: optim.Optimizer, optimizer_d: optim.Opt
             optimizer_g.step()
             
             # Record and print loss
-            train_loss_g += loss_g.item()
-            train_loss_d += loss_d.item()
+            train_loss_g_epoch += loss_g.item()
+            train_loss_d_epoch += loss_d.item()
             if (i + 1) % args.display_interval == 0:
                 print('Epoch: [{}][{}]\tBatch: [{}][{}]\tLoss G: {:.4f}\tLoss D: {:.4f}\tTime: {:.4f}'.format(
                     epoch + 1, total_epochs, i + 1, len(train_loader), 
@@ -356,8 +355,8 @@ def train(model: nn.Module, optimizer_g: optim.Optimizer, optimizer_d: optim.Opt
                     output_g_norm, ref_norm[:, :1], args.vmax, args.vmin)
 
                 # Record and print loss
-                train_loss_g += loss_g.item()
-                train_loss_d += loss_d.item()
+                train_loss_g_epoch += loss_g.item()
+                train_loss_d_epoch += loss_d.item()
                 if (i + 1) % args.display_interval == 0:
                     print('Epoch: [{}][{}]\tBatch: [{}][{}]\tLoss G: {:.4f}\tLoss D: {:.4f}\tTime: {:.4f}'.format(
                         epoch + 1, total_epochs, i + 1, len(train_loader),

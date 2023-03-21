@@ -210,7 +210,7 @@ class GLCIC(nn.Module):
             output_dim=1024, 
             ld_img_h=args.azimuth_blockage_range[1],
             ld_img_w=args.radial_range[1] - args.radial_range[0], 
-            gd_img_h=args.azimuth_range[1] - args.azimuth_range[0],
+            gd_img_h=args.azimuthal_range[1] - args.azimuthal_range[0] + args.padding_width * 2,
             gd_img_w=args.radial_range[1] - args.radial_range[0]
         )
         self.args = args

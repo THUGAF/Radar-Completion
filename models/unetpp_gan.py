@@ -94,7 +94,7 @@ class UNetpp_GAN(nn.Module):
         self.discriminator = UNetpp_Discriminator(
             in_channels=2,
             base_channels=64,
-            img_h=args.azimuth_range[1] - args.azimuth_range[0],
+            img_h=args.azimuthal_range[1] - args.azimuthal_range[0] + args.padding_width * 2,
             img_w=args.radial_range[1] - args.radial_range[0]
         )
         self.args = args

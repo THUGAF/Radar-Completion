@@ -5,8 +5,6 @@ nohup python -u train/test_baseline.py \
     --predict \
     --elevation-id 1 2 3 \
     --batch-size 16 \
-    --num-threads 1 \
-    --num-workers 1 \
     --case-indices 15451 \
     --case-anchor 160 \
     --case-blockage-len 40 \

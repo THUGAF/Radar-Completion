@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union
 import os
+import glob
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, Subset, random_split
@@ -22,12 +23,7 @@ class TrainingDataset(Dataset):
         self.elevation_id = elevation_id
         self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
-        self.files = []
-        date_list = sorted(os.listdir(root))
-        for date in date_list:
-            file_list = sorted(os.listdir(os.path.join(root, date)))
-            for file_ in file_list:
-                self.files.append(os.path.join(root, date, file_))
+        self.files = glob.glob(os.path.join(root, '*/*.pt'))
         self.files = self.files * augment_ratio
         if augment_ratio > 1:
             self.files = np.reshape(self.files, (augment_ratio, -1))

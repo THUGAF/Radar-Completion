@@ -136,7 +136,7 @@ def save_checkpoint(filename: str, current_iteration: int, train_loss_g: list, t
         'train_loss_d': train_loss_d,
         'val_loss_g': val_loss_g,
         'val_loss_d': val_loss_d,
-        'model': model.generator.state_dict(),
+        'generator': model.generator.state_dict(),
         'discriminator': model.discriminator.state_dict(),
         'optimizer_g': optimizer_g.state_dict(),
         'optimizer_d': optimizer_d.state_dict()
@@ -341,17 +341,17 @@ def train(model: nn.Module, optimizer_g: optim.Optimizer, optimizer_d: optim.Opt
                     output_g_norm, ref_norm[:, :1], args.vmax, args.vmin)
                 
                 # Record and print loss
-                train_loss_g_epoch += loss_g.item()
-                train_loss_d_epoch += loss_d.item()
+                val_loss_g_epoch += loss_g.item()
+                val_loss_d_epoch += loss_d.item()
                 if (i + 1) % args.display_interval == 0:
                     print('Epoch: [{}][{}]\tBatch: [{}][{}]\tLoss G: {:.4f}\tLoss D: {:.4f}\tTime: {:.4f}'.format(
-                        epoch + 1, total_epochs, i + 1, len(train_loader),
+                        epoch + 1, total_epochs, i + 1, len(val_loader),
                         loss_g.item(), loss_d.item(), time.time() - val_batch_timer))
-                    train_batch_timer = time.time()
-                        
+                    val_batch_timer = time.time()
+
         # Save val loss
-        val_loss_g_epoch = val_loss_g_epoch / len(train_loader)
-        val_loss_d_epoch = val_loss_d_epoch / len(train_loader)
+        val_loss_g_epoch = val_loss_g_epoch / len(val_loader)
+        val_loss_d_epoch = val_loss_d_epoch / len(val_loader)
         print('Epoch: [{}][{}]\tLoss G: {:.4f}\tLoss D: {:.4f}\tTime: {:.4f}'.format(
             epoch + 1, total_epochs, val_loss_g_epoch, val_loss_d_epoch,
             time.time() - val_epoch_timer))

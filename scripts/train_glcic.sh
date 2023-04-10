@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=3 \
 nohup python -u train/train_glcic.py \
     --train \
     --test \
@@ -13,7 +13,7 @@ nohup python -u train/train_glcic.py \
     --num-threads 10 \
     --num-workers 10 \
     --learning-rate 1e-4 \
-    --weight-decay 1e-4 \
+    --weight-decay 1e-2 \
     --weight-recon 100 \
     --case-indices 15451 \
     --case-anchor 160 \

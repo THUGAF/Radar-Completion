@@ -32,8 +32,6 @@ parser.add_argument('--padding-width', type=int, default=20)
 # data loading settings
 parser.add_argument('--train-ratio', type=float, default=0.64)
 parser.add_argument('--valid-ratio', type=float, default=0.16)
-parser.add_argument('--vmax', type=float, default=70.0)
-parser.add_argument('--vmin', type=float, default=0.0)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 40])
@@ -163,9 +161,9 @@ def early_stopping(val_loss: list, patience: int = 10):
     return early_stopping_flag
 
 
-def weighted_l1_loss(pred: torch.Tensor, truth: torch.Tensor, vmax: float, vmin: float) -> torch.Tensor:
+def weighted_l1_loss(pred: torch.Tensor, truth: torch.Tensor) -> torch.Tensor:
     points = torch.tensor([10.0, 20.0, 30.0, 40.0])
-    points = transform.minmax_norm(points, vmax, vmin)
+    points = transform.minmax_norm(points)
     weight = (truth < points[0]) * 1 \
         + (torch.logical_and(truth >= points[0], truth < points[1])) * 2 \
         + (torch.logical_and(truth >= points[1], truth < points[2])) * 5 \
@@ -230,12 +228,12 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
             # Forward propagation
             ref = ref.to(args.device)
             ref = pad_azimuth(ref, args.padding_width)
-            ref_norm = transform.minmax_norm(ref, args.vmax, args.vmin)
+            ref_norm = transform.minmax_norm(ref)
             masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
                 ref_norm, args.azimuth_blockage_range, args.random_seed + i)
             output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
             output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
-            loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1], args.vmax, args.vmin)
+            loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1])
             
             # Backward propagation
             optimizer.zero_grad()
@@ -273,12 +271,12 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
                 # Forward propagation
                 ref = ref.to(args.device)
                 ref = pad_azimuth(ref, args.padding_width)
-                ref_norm = transform.minmax_norm(ref, args.vmax, args.vmin)
+                ref_norm = transform.minmax_norm(ref)
                 masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
                     ref_norm, args.azimuth_blockage_range, args.random_seed + i)
                 output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
                 output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
-                loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1], args.vmax, args.vmin)
+                loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1])
 
                 # Record and print loss
                 val_loss_epoch += loss.item()
@@ -335,7 +333,7 @@ def test(model: nn.Module, test_loader: DataLoader):
         # Forward propagation
         ref = ref.to(args.device)
         ref = pad_azimuth(ref, args.padding_width)
-        ref_norm = transform.minmax_norm(ref, args.vmax, args.vmin)
+        ref_norm = transform.minmax_norm(ref)
         masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
             ref_norm, args.azimuth_blockage_range, args.random_seed + i)
         output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
@@ -348,8 +346,8 @@ def test(model: nn.Module, test_loader: DataLoader):
             test_batch_timer = time.time()
 
         # Back scaling
-        ref = transform.reverse_minmax_norm(ref_norm, args.vmax, args.vmin)
-        output = transform.reverse_minmax_norm(output_norm, args.vmax, args.vmin)
+        ref = transform.reverse_minmax_norm(ref_norm)
+        output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
         metrics['MAE'] += evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
@@ -384,15 +382,15 @@ def predict(model: nn.Module, case_loader: DataLoader):
         # Forward propagation
         ref = ref.to(args.device)
         ref = pad_azimuth(ref, args.padding_width)
-        ref_norm = transform.minmax_norm(ref, args.vmax, args.vmin)
+        ref_norm = transform.minmax_norm(ref)
         masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
             ref_norm, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
         output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
         output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
 
         # Back scaling
-        ref = transform.reverse_minmax_norm(ref_norm, args.vmax, args.vmin)
-        output = transform.reverse_minmax_norm(output_norm, args.vmax, args.vmin)
+        ref = transform.reverse_minmax_norm(ref_norm)
+        output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
         metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])

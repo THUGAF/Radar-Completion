@@ -1,13 +1,13 @@
 import torch
 
 
-def minmax_norm(tensor: torch.Tensor, vmax: float, vmin: float) -> torch.Tensor:
+def minmax_norm(tensor: torch.Tensor, vmax: float = 70.0, vmin: float = 0.0) -> torch.Tensor:
     tensor = torch.clip(tensor, vmin, vmax)
     tensor = ((tensor - vmin) / (vmax - vmin))
     return tensor
 
 
-def reverse_minmax_norm(tensor: torch.Tensor, vmax: float, vmin: float) -> torch.Tensor:
+def reverse_minmax_norm(tensor: torch.Tensor, vmax: float = 70.0, vmin: float = 0.0) -> torch.Tensor:
     tensor = torch.clip(tensor, 0.0, 1.0)
     tensor = tensor * (vmax - vmin) + vmin
     return tensor

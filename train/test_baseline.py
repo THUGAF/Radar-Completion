@@ -13,7 +13,6 @@ from torch.utils.data import DataLoader
 import utils.dataloader as dataloader
 import utils.visualizer as visualizer
 import utils.evaluation as evaluation
-import utils.transform as transform
 import utils.maskutils as maskutils
 
 
@@ -30,8 +29,6 @@ parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 parser.add_argument('--baseline-method', type=str, default='direct')
 parser.add_argument('--train-ratio', type=float, default=0.7)
 parser.add_argument('--valid-ratio', type=float, default=0.1)
-parser.add_argument('--vmax', type=float, default=70.0)
-parser.add_argument('--vmin', type=float, default=-10.0)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 40])

@@ -363,7 +363,7 @@ def test(model: nn.Module, test_loader: DataLoader):
         metrics[key] /= len(test_loader)
     df = pd.DataFrame(data=metrics, index=['MAE'])
     df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), 
-              float_format='%.8f', index='MAE')
+              float_format='%.8f', index=False)
     print('Test metrics saved')
 
 

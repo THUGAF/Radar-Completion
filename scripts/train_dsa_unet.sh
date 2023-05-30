@@ -10,8 +10,8 @@ nohup python -u train/train_dsa_unet.py \
     --max-iterations 100000 \
     --augment-ratio 4 \
     --batch-size 32 \
-    --num-threads 10 \
-    --num-workers 10 \
+    --num-threads 8 \
+    --num-workers 8 \
     --learning-rate 1e-4 \
     --weight-decay 1e-4 \
     --weight-recon 100 \

@@ -10,6 +10,7 @@ import torch
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from scipy.interpolate import RegularGridInterpolator
 import utils.dataloader as dataloader
 import utils.visualizer as visualizer
 import utils.evaluation as evaluation
@@ -76,6 +77,34 @@ def main(args):
     print('\n### All tasks complete ###')
 
 
+def direct_filling(ref: torch.Tensor, azimuth_start_point: int, anchor: int, 
+                   blockage_len: int, used_elevation_order: int = -1) -> torch.Tensor:
+    new_ref = torch.clone(ref)
+    new_ref[:, 0, anchor - azimuth_start_point: 
+            anchor + blockage_len - azimuth_start_point] = \
+    new_ref[:, used_elevation_order, anchor - azimuth_start_point: 
+            anchor + blockage_len - azimuth_start_point]
+    new_ref = new_ref[:, :1]
+    return new_ref
+
+
+def biliear_interp(masked_ref: torch.Tensor, azimuth_start_point: int, anchor: int,
+                   blockage_len: int) -> torch.Tensor:
+    batch_size, _, azimuthal_len, radial_len = masked_ref.size()
+    unmasked_ref = torch.cat([masked_ref[:, :, : anchor - azimuth_start_point], 
+                              masked_ref[:, :, anchor + blockage_len - azimuth_start_point:]], 
+                              dim=2)
+    b, c, r = np.arange(batch_size), np.arange(1), np.arange(radial_len)
+    a = np.concatenate([np.arange(anchor - azimuth_start_point),
+                        np.arange(anchor + blockage_len - azimuth_start_point, azimuthal_len)])
+    
+    interp = RegularGridInterpolator((b, c, a, r), unmasked_ref[:, :1].numpy())
+    full_a = np.arange(azimuthal_len)
+    b_grid, c_grid, full_a_grid, r_grid = np.meshgrid(b, c, full_a, r, indexing='ij')
+    interp_ref = torch.from_numpy(interp((b_grid, c_grid, full_a_grid, r_grid)))
+    return interp_ref
+
+
 @torch.no_grad()
 def test(test_loader):
     metrics = {}
@@ -93,7 +122,7 @@ def test(test_loader):
         # Forward
         masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
             ref, args.azimuth_blockage_range, args.random_seed + i)
-        output = maskutils.direct_filling(ref, args.azimuthal_range[0], anchor, blockage_len)
+        output = biliear_interp(masked_ref, args.azimuthal_range[0], anchor, blockage_len)
 
         # Print time
         if (i + 1) % args.display_interval == 0:
@@ -115,7 +144,7 @@ def test(test_loader):
         metrics[key] /= len(test_loader)
     df = pd.DataFrame(data=metrics, index=['MAE'])
     df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), 
-              float_format='%.8f', index='MAE')
+              float_format='%.8f', index=False)
     print('Test metrics saved')
 
 
@@ -129,7 +158,7 @@ def predict(case_loader: DataLoader):
         # Forward
         masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
             ref, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
-        output = maskutils.direct_filling(ref, args.azimuthal_range[0], anchor, blockage_len)
+        output = biliear_interp(masked_ref, args.azimuthal_range[0], anchor, blockage_len)
 
         # evaluation
         metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
@@ -155,8 +184,6 @@ def predict(case_loader: DataLoader):
         print('Figures saved')
 
     print('\nPrediction complete')
-    
-
 
 
 if __name__ == '__main__':

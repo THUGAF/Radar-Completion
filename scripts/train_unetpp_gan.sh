@@ -10,8 +10,8 @@ nohup python -u train/train_unetpp_gan.py \
     --max-iterations 100000 \
     --augment-ratio 4 \
     --batch-size 32 \
-    --num-threads 10 \
-    --num-workers 10 \
+    --num-threads 8 \
+    --num-workers 8 \
     --learning-rate 1e-4 \
     --weight-decay 1e-2 \
     --weight-recon 100 \

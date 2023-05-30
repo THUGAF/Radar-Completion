@@ -25,12 +25,3 @@ def gen_fixed_blockage_mask(ref: torch.Tensor, azimuth_start_point: int, anchor:
 
 def crop(x: torch.Tensor, xmin: int, ymin: int, w: int, h: int) -> torch.Tensor:
     return x[:, :, ymin: ymin + h, xmin: xmin + w]
-
-
-def direct_filling(ref: torch.Tensor, azimuth_start_point: int, anchor: int, 
-                   blockage_len: int, used_elevation_order: int = -1) -> torch.Tensor:
-    new_ref = torch.clone(ref)
-    new_ref[:, 0, anchor - azimuth_start_point: anchor + blockage_len - azimuth_start_point] = \
-    new_ref[:, used_elevation_order, anchor - azimuth_start_point: anchor + blockage_len - azimuth_start_point]
-    new_ref = new_ref[:, :1]
-    return new_ref

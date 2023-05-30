@@ -189,12 +189,12 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 
 
 if __name__ == '__main__':
-    model_names = ['Upper', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
-    model_dirs = ['results/Upper', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
+    model_names = ['Bilinear', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
+    model_dirs = ['results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
     save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.csv')
     save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.csv')
-    plot_ppis(model_names, model_dirs, 'case_0', 'img/ppi_case_0.jpg')
-    plot_psd(model_names, model_dirs, 'case_0', 'img/psd_case_0.jpg')
-    plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
-    plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
+    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
+    plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
+    # plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
+    # plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
     

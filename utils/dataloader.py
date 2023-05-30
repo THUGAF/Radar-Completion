@@ -23,7 +23,7 @@ class TrainingDataset(Dataset):
         self.elevation_id = elevation_id
         self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
-        self.files = glob.glob(os.path.join(root, '*/*.pt'))
+        self.files = sorted(glob.glob(os.path.join(root, '*/*.pt')))
         self.files = self.files * augment_ratio
         if augment_ratio > 1:
             self.files = np.reshape(self.files, (augment_ratio, -1))

@@ -136,7 +136,7 @@ class GLCIC_LocalDiscriminator(nn.Module):
         self.flatten4 = Flatten()
         self.linear4 = nn.Linear(in_features, output_dim)
         self.act4 = nn.ReLU()
-        # output_shape: (None, 1024)
+        # output_shape: (None, output_dim)
 
     def forward(self, x):
         x = self.bn1(self.act1(self.conv1(x)))
@@ -168,7 +168,7 @@ class GLCIC_GlobalDiscriminator(nn.Module):
         self.flatten4 = Flatten()
         self.linear4 = nn.Linear(in_features, output_dim)
         self.act4 = nn.ReLU()
-        # output_shape: (None, 1024)
+        # output_shape: (None, output_dim)
 
     def forward(self, x):
         x = self.bn1(self.act1(self.conv1(x)))
@@ -185,7 +185,7 @@ class GLCIC_ContextDiscriminator(nn.Module):
         self.ld_img_w = ld_img_w
         self.model_ld = GLCIC_LocalDiscriminator(input_dim, output_dim, ld_img_h, ld_img_w)
         self.model_gd = GLCIC_GlobalDiscriminator(input_dim, output_dim, gd_img_h, gd_img_w)
-        # input_shape: [(None, 1024), (None, 1024)]
+        # input_shape: [(None, output_dim), (None, output_dim)]
         in_features = self.model_ld.output_dim + self.model_gd.output_dim
         self.concat1 = Concatenate(dim=-1)
         # input_shape: (None, 2048)
@@ -207,7 +207,7 @@ class GLCIC(nn.Module):
         self.generator = GLCIC_CompletionNetwork(input_dim)
         self.discriminator = GLCIC_ContextDiscriminator(
             input_dim=1, 
-            output_dim=1024, 
+            output_dim=128, 
             ld_img_h=args.azimuth_blockage_range[1],
             ld_img_w=args.radial_range[1] - args.radial_range[0], 
             gd_img_h=args.azimuthal_range[1] - args.azimuthal_range[0] + args.padding_width * 2,

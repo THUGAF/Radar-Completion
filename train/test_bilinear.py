@@ -27,7 +27,6 @@ parser.add_argument('--azimuthal-range', type=int, nargs='+', default=[0, 360])
 parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 
 # data loading settings
-parser.add_argument('--baseline-method', type=str, default='direct')
 parser.add_argument('--train-ratio', type=float, default=0.7)
 parser.add_argument('--valid-ratio', type=float, default=0.1)
 
@@ -111,7 +110,6 @@ def test(test_loader):
     metrics['MAE'] = 0
     metrics['RMSE'] = 0
     metrics['MBE'] = 0
-    metrics['COSSIM'] = 0
 
     # Timer
     test_timer = time.time()
@@ -131,10 +129,15 @@ def test(test_loader):
             test_batch_timer = time.time()
 
         # Evaluation
-        metrics['MAE'] += evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        metrics['RMSE'] += evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        metrics['MBE'] += evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        metrics['COSSIM'] += evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
+        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        metrics['MAE'] += np.append(maes, total_mae)
+        metrics['RMSE'] += np.append(rmses, total_rmse)
+        metrics['MBE'] += np.append(mbes, total_mbe)
 
     # Print test time
     print('Time: {:.4f}'.format(time.time() - test_timer))
@@ -142,9 +145,9 @@ def test(test_loader):
     # Save metrics
     for key in metrics.keys():
         metrics[key] /= len(test_loader)
-    df = pd.DataFrame(data=metrics, index=['MAE'])
-    df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), 
-              float_format='%.8f', index=False)
+    index = [str(t) for t in thresholds] + ['total']
+    df = pd.DataFrame(data=metrics, index=index)
+    df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), float_format='%.4f')
     print('Test metrics saved')
 
 
@@ -160,16 +163,21 @@ def predict(case_loader: DataLoader):
             ref, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
         output = biliear_interp(masked_ref, args.azimuthal_range[0], anchor, blockage_len)
 
-        # evaluation
-        metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        metrics['RMSE'] = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        metrics['MBE'] = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        metrics['COSSIM'] = evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
+        # Evaluation
+        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        metrics['MAE'] = np.append(maes, total_mae)
+        metrics['RMSE'] = np.append(rmses, total_rmse)
+        metrics['MBE'] = np.append(mbes, total_mbe)
 
-        df = pd.DataFrame(data=metrics, index=['MAE'])
-        df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), 
-                  float_format='%.8f', index=False)
-        print('Evaluation complete')
+        index = [str(t) for t in thresholds] + ['total']
+        df = pd.DataFrame(data=metrics, index=index)
+        df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), float_format='%.4f')
+        print('Case {} metrics saved'.format(i))
 
         # Save tensors
         tensors = torch.cat([output, ref], dim=1)

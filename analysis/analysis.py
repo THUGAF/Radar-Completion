@@ -107,69 +107,30 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     print('{} saved'.format(img_path))
 
 
-def plot_radar_polygon(model_names, model_dirs, img_path):
-    print('Plotting {} ...'.format(img_path))
-    fig = plt.figure(figsize=(6, 6), dpi=600)
-    ax = fig.add_subplot(1, 1, 1, projection='polar')
-    handles = []
-    for i in range(len(model_names)):
-        test_df = pd.read_csv(os.path.join(model_dirs[i], 'test_metrics.csv'))
-        test_metrics = test_df.iloc[-1].values
-        test_metrics[0], test_metrics[1] = test_metrics[0] / 10, test_metrics[1] / 10
-        sample_df = pd.read_csv(os.path.join(model_dirs[i], 'sample_0_metrics.csv'))
-        sample_metrics = sample_df.iloc[-1].values
-        sample_metrics[0], sample_metrics[1] = sample_metrics[0] / 10, sample_metrics[1] / 10
-        metrics = np.concatenate([test_metrics, sample_metrics])
-        angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False)
-        labels = np.append(['${}_{{test}}$'.format(j) for j in test_df.columns],
-                           ['${}_{{sample}}$'.format(j) for j in sample_df.columns])
-        metrics = np.append(metrics, metrics[0])
-        angles = np.append(angles, angles[0])
-        labels = np.append(labels, labels[0])
-        h, = ax.plot(angles, metrics)
-        for j in np.arange(0, 1.4, 0.2):
-            ax.plot(angles, [j] * len(angles), '-.', lw=0.5, color='black')
-        for angle in angles:
-            ax.plot([angle, angle], [0, 1.2], '-.', lw=0.5, color='black')
-        ax.set_thetagrids(angles * 180 / np.pi, labels)
-        ax.set_theta_zero_location('N')
-        ax.set_rlabel_position(0)
-        ax.spines['polar'].set_visible(False)
-        ax.grid(False)
-        handles.append(h)
-    
-    fig.legend(labels=model_names, handles=handles)
-    fig.savefig(img_path, bbox_inches='tight')
-    print('{} saved'.format(img_path))
-
-
 def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     print('Plotting {} ...'.format(img_path))
     metrics = []
     num_models = len(model_names)
     for i in range(num_models):
-        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)))
-        metrics.append(df.iloc[-1].values)
-    metrics = np.concatenate(metrics)
-    labels = df.columns.values
+        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)), index_col=0)
+        metrics.append(df.values)
+    metrics = np.stack(metrics)
 
-    fig = plt.figure(figsize=(7, 4), dpi=600)
-    ax1 = fig.add_subplot(1, 1, 1)
-    x = np.arange(labels.shape[0])
-    width = 0.2
-    for i in range(num_models):
-        ax1.bar((x + width * (i - (num_models - 1) / 2))[:-1], metrics[i, :-1], width,
-                label=model_names[i])
-    ax1.axhline(xmax=0.8, color='k', linestyle='--')
-    ax1.set_xticks(x, labels=labels)
-    ax1.set_ylabel('Error (dBZ)')
-
-    ax2 = ax1.twinx()
-    for i in range(num_models):
-        ax2.bar((x + width * (i - (num_models - 1) / 2))[-1], metrics[i, -1], width,
-                label=model_names[i])
-    ax2.set_ylabel('Similarity')
-    ax2.legend(model_names, fontsize=8)
+    num_rows = (len(df.index) + 1) // 2
+    fig = plt.figure(figsize=(6 * 2, 4 * num_rows), dpi=600)
+    for i, idx in enumerate(df.index):
+        ax = fig.add_subplot((len(df.index) + 1) // 2, 2, i + 1)
+        title = '{} dBZ'.format(idx) if idx != 'total' else idx
+        ax.set_title(title)
+        x = np.arange(len(df.columns))
+        width = 0.2
+        for j in range(num_models):
+            ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width,
+                   label=model_names[j], color=plt.get_cmap('Set3').colors[j])
+        ax.legend(model_names, fontsize=8)
+        ax.axhline(color='k', linestyle='--', linewidth=1)
+        ax.set_xticks(x, labels=df.columns.values)
+        ax.set_ylabel('Error (dBZ)')
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -180,21 +141,24 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
     metrics = []
     num_models = len(model_names)
     for i in range(num_models):
-        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)))
-        metrics.append(df.iloc[-1].values)
+        df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)), index_col=0)
+        metrics.append(df.values)
     metrics = np.stack(metrics)
-    new_df = pd.DataFrame(metrics, index=model_names, columns=df.columns)
-    new_df.to_csv(file_path, float_format='%.4f')
+    writer = pd.ExcelWriter(file_path, mode='w')
+    for i, idx in enumerate(df.index):
+        new_df = pd.DataFrame(metrics[:, i], index=model_names, columns=df.columns)
+        new_df.to_excel(writer, sheet_name=idx, float_format='%.4f')
+    writer.close()
     print('{} saved'.format(file_path))
 
 
 if __name__ == '__main__':
     model_names = ['Bilinear', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
     model_dirs = ['results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
-    save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.csv')
-    save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.csv')
-    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
-    plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
-    # plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
-    # plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
+    save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.xlsx')
+    save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.xlsx')
+    # plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
+    # plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
+    plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
+    plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
     

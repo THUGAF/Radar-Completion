@@ -384,7 +384,6 @@ def test(model: nn.Module, test_loader: DataLoader):
     metrics['MAE'] = 0
     metrics['RMSE'] = 0
     metrics['MBE'] = 0
-    metrics['COSSIM'] = 0
     
     # Test
     print('\n[Test]')
@@ -419,10 +418,15 @@ def test(model: nn.Module, test_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        metrics['MAE'] += evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        metrics['RMSE'] += evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        metrics['MBE'] += evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        metrics['COSSIM'] += evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
+        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        metrics['MAE'] += np.append(maes, total_mae)
+        metrics['RMSE'] += np.append(rmses, total_rmse)
+        metrics['MBE'] += np.append(mbes, total_mbe)
 
     # Print test time
     print('Time: {:.4f}'.format(time.time() - test_timer))
@@ -430,9 +434,9 @@ def test(model: nn.Module, test_loader: DataLoader):
     # Save metrics
     for key in metrics.keys():
         metrics[key] /= len(test_loader)
-    df = pd.DataFrame(data=metrics, index=['MAE'])
-    df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), 
-              float_format='%.8f', index=False)
+    index = [str(t) for t in thresholds] + ['total']
+    df = pd.DataFrame(data=metrics, index=index)
+    df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), float_format='%.4f')
     print('Test metrics saved')
 
 
@@ -462,14 +466,19 @@ def predict(model: nn.Module, case_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        metrics['MAE'] = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        metrics['RMSE'] = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        metrics['MBE'] = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        metrics['COSSIM'] = evaluation.evaluate_cossim(ref[:, :1], output, mask[:, :1])
+        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        metrics['MAE'] = np.append(maes, total_mae)
+        metrics['RMSE'] = np.append(rmses, total_rmse)
+        metrics['MBE'] = np.append(mbes, total_mbe)
 
-        df = pd.DataFrame(data=metrics, index=['MAE'])
-        df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), 
-                  float_format='%.8f', index=False)
+        index = [str(t) for t in thresholds] + ['total']
+        df = pd.DataFrame(data=metrics, index=index)
+        df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), float_format='%.4f')
         print('Case {} metrics saved'.format(i))
 
         # Save tensors

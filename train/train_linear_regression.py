@@ -8,15 +8,14 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import utils.dataloader as dataloader
 import utils.visualizer as visualizer
 import utils.evaluation as evaluation
-import utils.transform as transform
-import utils.dataloader as dataloader
 import utils.maskutils as maskutils
-import models
 
 
 parser = argparse.ArgumentParser()
@@ -27,11 +26,10 @@ parser.add_argument('--output-path', type=str, default='results')
 parser.add_argument('--elevation-id', type=int, nargs='+', default=[1, 2, 3])
 parser.add_argument('--azimuthal-range', type=int, nargs='+', default=[0, 360])
 parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
-parser.add_argument('--padding-width', type=int, default=20)
 
 # data loading settings
-parser.add_argument('--train-ratio', type=float, default=0.64)
-parser.add_argument('--valid-ratio', type=float, default=0.16)
+parser.add_argument('--train-ratio', type=float, default=0.7)
+parser.add_argument('--valid-ratio', type=float, default=0.1)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 40])
@@ -40,20 +38,14 @@ parser.add_argument('--case-anchor', type=int, nargs='+', default=[0])
 parser.add_argument('--case-blockage-len', type=int, nargs='+', default=[40])
 
 # training settings
-parser.add_argument('--pretrain', action='store_true')
 parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 parser.add_argument('--predict', action='store_true')
 parser.add_argument('--early-stopping', action='store_true')
-parser.add_argument('--augment-ratio', type=int, default=1)
 parser.add_argument('--batch-size', type=int, default=4)
 parser.add_argument('--max-iterations', type=int, default=100000)
 parser.add_argument('--start-iterations', type=int, default=0)
 parser.add_argument('--learning-rate', type=float, default=0.001)
-parser.add_argument('--beta1', type=float, default=0.9)
-parser.add_argument('--beta2', type=float, default=0.999)
-parser.add_argument('--weight-decay', type=float, default=0)
-parser.add_argument('--weight-recon', type=float, default=100)
 parser.add_argument('--num-threads', type=int, default=1)
 parser.add_argument('--num-workers', type=int, default=1)
 parser.add_argument('--display-interval', type=int, default=1)
@@ -64,7 +56,7 @@ args = parser.parse_args()
 
 def main(args):
     print('### Initialize settings ###')
-    
+
     # Fix the random seed
     random.seed(args.random_seed)
     np.random.seed(args.random_seed)
@@ -78,17 +70,11 @@ def main(args):
         torch.cuda.manual_seed_all(args.random_seed)
     else:
         args.device = 'cpu'
-
+    
     # Set model and optimizer
-    if isinstance(args.elevation_id, list):
-        input_dim = len(args.elevation_id) * 2
-    elif isinstance(args.elevation_id, int):
-        input_dim = 2
-    model = models.DSA_UNet(input_dim).to(args.device)
+    model = nn.Linear(in_features=len(args.elevation_id) - 1, out_features=1).to(args.device)
     count_params(model)
-    optimizer = optim.Adam(model.parameters(), args.learning_rate,
-                           betas=(args.beta1, args.beta2),
-                           weight_decay=args.weight_decay)
+    optimizer = optim.Adam(model.parameters(), args.learning_rate)
 
     # Make dir
     if not os.path.exists(args.output_path):
@@ -97,9 +83,9 @@ def main(args):
     # Load data
     if args.train or args.test:
         train_loader, val_loader, test_loader = dataloader.load_data(
-            args.data_path, args.batch_size, args.num_workers, args.train_ratio, args.valid_ratio, 
-            args.elevation_id, args.azimuthal_range, args.radial_range, args.augment_ratio)
-
+            args.data_path, args.batch_size, args.num_workers, args.train_ratio, args.valid_ratio,
+            args.elevation_id, args.azimuthal_range, args.radial_range)
+    
     # Train, test, and predict
     print('\n### Start tasks ###')
     if args.train:
@@ -107,12 +93,13 @@ def main(args):
     if args.test:
         test(model, test_loader)
     if args.predict:
-        case_loader = dataloader.load_case(args.data_path, args.case_indices, args.elevation_id, 
-                                           args.azimuthal_range, args.radial_range)
+        case_loader = dataloader.load_case(
+            args.data_path, args.case_indices,
+            args.elevation_id, args.azimuthal_range, args.radial_range)
         predict(model, case_loader)
-
+    
     print('\n### All tasks complete ###')
-
+    
 
 def count_params(model: nn.Module):
     model_params = filter(lambda p: p.requires_grad, model.parameters())
@@ -161,28 +148,6 @@ def early_stopping(val_loss: list, patience: int = 10):
     return early_stopping_flag
 
 
-def weighted_l1_loss(pred: torch.Tensor, truth: torch.Tensor) -> torch.Tensor:
-    points = torch.tensor([10.0, 20.0, 30.0, 40.0])
-    points = transform.minmax_norm(points)
-    weight = (truth < points[0]) * 1 \
-        + (torch.logical_and(truth >= points[0], truth < points[1])) * 2 \
-        + (torch.logical_and(truth >= points[1], truth < points[2])) * 5 \
-        + (torch.logical_and(truth >= points[2], truth < points[3])) * 10 \
-        + (truth >= points[3]) * 30
-    return torch.mean(weight * torch.abs(pred - truth))
-
-
-def pad_azimuth(ref: torch.Tensor, width: int = 20) -> torch.Tensor:
-    start_pad = ref[:, :, -width:]
-    end_pad = ref[:, :, :width]
-    ref = torch.cat([start_pad, ref, end_pad], dim=2)
-    return ref
-
-
-def unpad_azimuth(ref: torch.Tensor, width: int = 20) -> torch.Tensor:
-    return ref[:, :, width: -width]
-
-
 def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader, val_loader: DataLoader):
     # Pretrain
     if args.pretrain:
@@ -224,17 +189,14 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
             if current_iteration > args.max_iterations:
                 print('Max iterations reached. Exit!')
                 break
-
+        
             # Forward propagation
             ref = ref.to(args.device)
-            ref = pad_azimuth(ref, args.padding_width)
-            ref_norm = transform.minmax_norm(ref)
-            masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                ref_norm, args.azimuth_blockage_range, args.random_seed + i)
-            output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
-            output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
-            loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1])
-            
+            input_, truth = ref[:, 1:], ref[:, :1]
+            input_ = input_.permute(0, 2, 3, 1).contiguous()
+            output = model(input_).permute(0, 3, 1, 2).contiguous()
+            loss = nn.MSELoss()(output, truth)
+
             # Backward propagation
             optimizer.zero_grad()
             loss.backward()
@@ -247,7 +209,7 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
                     epoch + 1, total_epochs, i + 1, len(train_loader), loss.item(), 
                     time.time() - train_batch_timer))
                 train_batch_timer = time.time()
-            
+        
         # Save train loss
         train_loss_epoch = train_loss_epoch / len(train_loader)
         print('Epoch: [{}][{}]\tLoss: {:.4f}\tTime: {:.4f}'.format(
@@ -270,13 +232,10 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
             for i, (t, elev, ref) in enumerate(val_loader):
                 # Forward propagation
                 ref = ref.to(args.device)
-                ref = pad_azimuth(ref, args.padding_width)
-                ref_norm = transform.minmax_norm(ref)
-                masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-                    ref_norm, args.azimuth_blockage_range, args.random_seed + i)
-                output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
-                output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
-                loss = args.weight_recon * weighted_l1_loss(output_norm, ref_norm[:, :1])
+                input_, truth = ref[:, 1:], ref[:, :1]
+                input_ = input_.permute(0, 2, 3, 1).contiguous()
+                output = model(input_).permute(0, 3, 1, 2).contiguous()
+                loss = nn.MSELoss()(output, truth)
 
                 # Record and print loss
                 val_loss_epoch += loss.item()
@@ -311,11 +270,14 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
 
 @torch.no_grad()
 def test(model: nn.Module, test_loader: DataLoader):
-    # Init metric dict
     metrics = {}
     metrics['MAE'] = 0
     metrics['RMSE'] = 0
     metrics['MBE'] = 0
+
+    # Timer
+    test_timer = time.time()
+    test_batch_timer = time.time()
 
     # Test
     print('\n[Test]')
@@ -323,20 +285,16 @@ def test(model: nn.Module, test_loader: DataLoader):
     states = load_checkpoint(bestparams_path, args.device)
     model.load_state_dict(states['model'])
     model.eval()
-
-    # Timer
-    test_timer = time.time()
-    test_batch_timer = time.time()
-
+    
     for i, (t, elev, ref) in enumerate(test_loader):
         # Forward propagation
         ref = ref.to(args.device)
-        ref = pad_azimuth(ref, args.padding_width)
-        ref_norm = transform.minmax_norm(ref)
-        masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
-            ref_norm, args.azimuth_blockage_range, args.random_seed + i)
-        output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
-        output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
+        input_, truth = ref[:, 1:], ref[:, :1]
+        input_ = input_.permute(0, 2, 3, 1).contiguous()
+        output = model(input_).permute(0, 3, 1, 2).contiguous()
+        masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
+            ref, args.azimuth_blockage_range, args.random_seed + i)
+        output = masked_ref[:, :1] + output * (1 - mask[:, :1])
 
         # Print time
         if (i + 1) % args.display_interval == 0:
@@ -344,12 +302,7 @@ def test(model: nn.Module, test_loader: DataLoader):
                 i + 1, len(test_loader), time.time() - test_batch_timer))
             test_batch_timer = time.time()
 
-        # Back scaling
-        ref = transform.reverse_minmax_norm(ref_norm)
-        output = transform.reverse_minmax_norm(output_norm)
-
         # Evaluation
-        truth = ref[:, :1]
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
@@ -386,19 +339,14 @@ def predict(model: nn.Module, case_loader: DataLoader):
 
         # Forward propagation
         ref = ref.to(args.device)
-        ref = pad_azimuth(ref, args.padding_width)
-        ref_norm = transform.minmax_norm(ref)
-        masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
-            ref_norm, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
-        output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
-        output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
-
-        # Back scaling
-        ref = transform.reverse_minmax_norm(ref_norm)
-        output = transform.reverse_minmax_norm(output_norm)
+        input_, truth = ref[:, 1:], ref[:, :1]
+        input_ = input_.permute(0, 2, 3, 1).contiguous()
+        output = model(input_).permute(0, 3, 1, 2).contiguous()
+        masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
+            ref, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
+        output = masked_ref[:, :1] + output * (1 - mask[:, :1])
 
         # Evaluation
-        truth = ref[:, :1]
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
@@ -415,7 +363,7 @@ def predict(model: nn.Module, case_loader: DataLoader):
         print('Case {} metrics saved'.format(i))
 
         # Save tensors
-        tensors = unpad_azimuth(torch.cat([output, ref], dim=1), args.padding_width)
+        tensors = torch.cat([output, ref], dim=1)
         visualizer.save_tensor(tensors, args.output_path, 'case_{}'.format(i))
         print('Tensors saved')
         

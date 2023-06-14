@@ -22,7 +22,8 @@ BLOCKAGE_LEN = [40]
 def plot_ppis(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names) + 1
-    fig = plt.figure(figsize=(num_subplot * 6, 6), dpi=600)
+    num_rows = (num_subplot + 1) // 2
+    fig = plt.figure(figsize=(num_rows * 6, 6 * 2), dpi=300)
     
     truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 1]
     azimuth_size, radial_size = truth.size(0), truth.size(1)
@@ -35,7 +36,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
             tensor = truth
         else:
             tensor = torch.load(os.path.join(model_dirs[i - 1], '{}.pt'.format(stage)))[0, 0]
-        ax = fig.add_subplot(1, num_subplot, i + 1, projection='polar')
+        ax = fig.add_subplot(2, num_rows, i + 1, projection='polar')
         title = 'Truth' if i == 0 else model_names[i - 1]
         ax.grid(False)
         ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
@@ -56,9 +57,9 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
         ax.tick_params(labelsize=16)
     
     fig.subplots_adjust(right=0.90)
-    cax = fig.add_axes([0.92, 0.14, 0.008, 0.72])
+    cax = fig.add_axes([0.94, 0.14, 0.01, 0.72])
     cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical')
-    cbar.set_label('dBZ', fontsize=20)
+    cbar.set_label('dBZ', fontsize=20, labelpad=20)
     cbar.ax.tick_params(labelsize=18)
 
     fig.savefig(img_path, bbox_inches='tight')
@@ -72,7 +73,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     wavelength_radial, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
     wavelength_azimuthal, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
 
-    fig = plt.figure(figsize=(8, 8), dpi=600)
+    fig = plt.figure(figsize=(8, 8), dpi=300)
     ax1 = fig.add_subplot(2, 1, 1)
     ax2 = fig.add_subplot(2, 1, 2)
     
@@ -92,16 +93,16 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.invert_xaxis()
     ax1.set_xlabel('Wave Length (km)', fontsize='large')
     ax1.set_ylabel('Radial power spectral density', fontsize='large')
-    ax1.legend(legend)
-    ax1.text(-0.05, 1.05, '(a)', fontsize=18, transform=ax1.transAxes)
+    ax1.legend(legend, loc='lower left', fontsize='small', edgecolor='w', fancybox=False)
+    ax1.text(-0.1, 1.05, '(a)', fontsize=18, transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
     ax2.set_xlabel('Wave Length (deg)', fontsize='large')
     ax2.set_ylabel('Azimuthal power spectral density', fontsize='large')
-    ax2.legend(legend)
-    ax2.text(-0.05, 1.05, '(b)', fontsize=18, transform=ax2.transAxes)
+    ax2.legend(legend, loc='lower left', fontsize='small', edgecolor='w', fancybox=False)
+    ax2.text(-0.1, 1.05, '(b)', fontsize=18, transform=ax2.transAxes)
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -116,22 +117,34 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
         metrics.append(df.values)
     metrics = np.stack(metrics)
 
-    num_rows = (len(df.index) + 1) // 2
-    fig = plt.figure(figsize=(6 * 2, 4 * num_rows), dpi=600)
-    for i, idx in enumerate(df.index):
-        ax = fig.add_subplot((len(df.index) + 1) // 2, 2, i + 1)
-        title = '{} dBZ'.format(idx) if idx != 'total' else idx
-        ax.set_title(title)
+    num_subplot = len(df.index)
+    num_rows = (num_subplot + 1) // 2
+    fig = plt.figure(figsize=(2 * 6, num_rows * 4), dpi=300)
+    for i in range(num_subplot):
+        ax = fig.add_subplot((num_subplot + 1) // 2, 2, i + 1)
+        if i < num_subplot - 2:
+            title = '{}~{} dBZ'.format(df.index[i], df.index[i + 1])
+        elif i == num_subplot - 2:
+            title = '>{} dBZ'.format(df.index[i])
+        else:
+            title = 'total'
+        ax.set_title(title, loc='right', fontsize=14)
         x = np.arange(len(df.columns))
-        width = 0.2
+        width = 0.16
         for j in range(num_models):
             ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width,
-                   label=model_names[j], color=plt.get_cmap('Set3').colors[j])
-        ax.legend(model_names, fontsize=8)
+                   label=model_names[j], color=plt.get_cmap('Set3').colors[j], edgecolor='k')
         ax.axhline(color='k', linestyle='--', linewidth=1)
         ax.set_xticks(x, labels=df.columns.values)
-        ax.set_ylabel('Error (dBZ)')
+        ax.tick_params(labelsize=12)
+        ax.set_ylabel('Error (dBZ)', fontsize=12)
+        ax.text(-0.1, 1.05, '({})'.format(chr(97 + i)), fontsize=18, transform=ax.transAxes)
 
+    fig.subplots_adjust(bottom=0.06)
+    lax = fig.add_axes([0, 0, 1, 0.04])
+    lax.set_axis_off()
+    lax.legend(ax.containers, model_names, fontsize=14, loc='center', ncols=len(model_names),
+               edgecolor='w', fancybox=False)
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
 
@@ -153,12 +166,12 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 
 
 if __name__ == '__main__':
-    model_names = ['Bilinear', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
-    model_dirs = ['results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
+    model_names = ['MLG', 'BI', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
+    model_dirs = ['results/MLG', 'results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
     save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.xlsx')
     save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.xlsx')
-    # plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
-    # plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
+    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
     plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
     plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
+    plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
     

@@ -418,12 +418,13 @@ def test(model: nn.Module, test_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
-        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
-        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        truth = ref[:, :1]
+        total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(output, truth, mask[:, :1])
         metrics['MAE'] += np.append(maes, total_mae)
         metrics['RMSE'] += np.append(rmses, total_rmse)
         metrics['MBE'] += np.append(mbes, total_mbe)
@@ -466,12 +467,13 @@ def predict(model: nn.Module, case_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        total_mae = evaluation.evaluate_mae(ref[:, :1], output, mask[:, :1])
-        total_rmse = evaluation.evaluate_rmse(ref[:, :1], output, mask[:, :1])
-        total_mbe = evaluation.evaluate_mbe(ref[:, :1], output, mask[:, :1])
-        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(ref[:, :1], output, mask[:, :1])
-        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(ref[:, :1], output, mask[:, :1])
-        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(ref[:, :1], output, mask[:, :1])
+        truth = ref[:, :1]
+        total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
+        total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
+        total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
+        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(output, truth, mask[:, :1])
         metrics['MAE'] = np.append(maes, total_mae)
         metrics['RMSE'] = np.append(rmses, total_rmse)
         metrics['MBE'] = np.append(mbes, total_mbe)

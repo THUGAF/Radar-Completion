@@ -35,7 +35,8 @@ def evaluate_mae_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask:
     maes = []
     for threshold in thresholds:
         loc = truth[mask] >= threshold
-        mae = F.l1_loss(pred[mask][loc], truth[mask][loc])
+        pred_flatten, truth_flatten = pred[mask][loc], truth[mask][loc]
+        mae = F.l1_loss(pred_flatten, truth_flatten)
         mae = torch.nan_to_num(mae).item()
         maes.append(mae)
     return thresholds, maes
@@ -49,7 +50,8 @@ def evaluate_rmse_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask
     rmses = []
     for threshold in thresholds:
         loc = truth[mask] >= threshold
-        rmse = torch.sqrt(F.mse_loss(pred[mask][loc], truth[mask][loc]))
+        pred_flatten, truth_flatten = pred[mask][loc], truth[mask][loc]
+        rmse = torch.sqrt(F.mse_loss(pred_flatten, truth_flatten))
         rmse = torch.nan_to_num(rmse).item()
         rmses.append(rmse)
     return thresholds, rmses
@@ -63,7 +65,8 @@ def evaluate_mbe_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask:
     mbes = []
     for threshold in thresholds:
         loc = truth[mask] >= threshold
-        mbe = torch.mean(pred[mask][loc] - truth[mask][loc])
+        pred_flatten, truth_flatten = pred[mask][loc], truth[mask][loc]
+        mbe = torch.mean(pred_flatten - truth_flatten)
         mbe = torch.nan_to_num(mbe).item()
         mbes.append(mbe)
     return thresholds, mbes

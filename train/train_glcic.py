@@ -31,8 +31,8 @@ parser.add_argument('--radial-range', type=int, nargs='+', default=[0, 80])
 parser.add_argument('--padding-width', type=int, default=20)
 
 # data loading settings
-parser.add_argument('--train-ratio', type=float, default=0.64)
-parser.add_argument('--valid-ratio', type=float, default=0.16)
+parser.add_argument('--train-ratio', type=float, default=0.7)
+parser.add_argument('--valid-ratio', type=float, default=0.1)
 
 # mask settings
 parser.add_argument('--azimuth-blockage-range', type=int, nargs='+', default=[10, 40])

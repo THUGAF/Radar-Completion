@@ -1,6 +1,5 @@
 CUDA_VISIBLE_DEVICES=1 \
 nohup python -u train/train_linear_regression.py \
-    --train \
     --test \
     --predict \
     --early-stopping \
@@ -15,5 +14,5 @@ nohup python -u train/train_linear_regression.py \
     --case-indices 15451 \
     --case-anchor 160 \
     --case-blockage-len 40 \
-    --display-interval 50 \
+    --display-interval 10 \
     > results/train_linear_regression.log 2>&1 &

@@ -121,6 +121,8 @@ def test(test_loader):
         masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
             ref, args.azimuth_blockage_range, args.random_seed + i)
         output = biliear_interp(masked_ref, args.azimuthal_range[0], anchor, blockage_len)
+        output = torch.clip(output, min=0, max=70)
+        output = torch.nan_to_num(output)
 
         # Print time
         if (i + 1) % args.display_interval == 0:
@@ -129,7 +131,7 @@ def test(test_loader):
             test_batch_timer = time.time()
 
         # Evaluation
-        truth = ref[:, :1]
+        truth = torch.clip(ref[:, :1], min=0, max=70)
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
@@ -163,9 +165,11 @@ def predict(case_loader: DataLoader):
         masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
             ref, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
         output = biliear_interp(masked_ref, args.azimuthal_range[0], anchor, blockage_len)
+        output = torch.clip(output, min=0, max=70)
+        output = torch.nan_to_num(output)
 
         # Evaluation
-        truth = ref[:, :1]
+        truth = torch.clip(ref[:, :1], min=0, max=70)
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])

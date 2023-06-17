@@ -349,7 +349,7 @@ def test(model: nn.Module, test_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        truth = ref[:, :1]
+        truth = torch.clip(ref[:, :1], min=0, max=70)
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
@@ -398,7 +398,7 @@ def predict(model: nn.Module, case_loader: DataLoader):
         output = transform.reverse_minmax_norm(output_norm)
 
         # Evaluation
-        truth = ref[:, :1]
+        truth = torch.clip(ref[:, :1], min=0, max=70)
         total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
         total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
         total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])

@@ -192,7 +192,7 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
         
             # Forward propagation
             ref = ref.to(args.device)
-            input_, truth = ref[:, 1:], ref[:, :1]
+            input_, truth = ref[:, 1:], torch.clip(ref[:, :1], min=0, max=70)
             input_ = input_.permute(0, 2, 3, 1).contiguous()
             output = model(input_).permute(0, 3, 1, 2).contiguous()
             loss = nn.MSELoss()(output, truth)
@@ -232,7 +232,7 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
             for i, (t, elev, ref) in enumerate(val_loader):
                 # Forward propagation
                 ref = ref.to(args.device)
-                input_, truth = ref[:, 1:], ref[:, :1]
+                input_, truth = ref[:, 1:], torch.clip(ref[:, :1], min=0, max=70)
                 input_ = input_.permute(0, 2, 3, 1).contiguous()
                 output = model(input_).permute(0, 3, 1, 2).contiguous()
                 loss = nn.MSELoss()(output, truth)
@@ -289,7 +289,7 @@ def test(model: nn.Module, test_loader: DataLoader):
     for i, (t, elev, ref) in enumerate(test_loader):
         # Forward propagation
         ref = ref.to(args.device)
-        input_, truth = ref[:, 1:], ref[:, :1]
+        input_, truth = ref[:, 1:], torch.clip(ref[:, :1], min=0, max=70)
         input_ = input_.permute(0, 2, 3, 1).contiguous()
         output = model(input_).permute(0, 3, 1, 2).contiguous()
         masked_ref, mask, anchor, blockage_len = maskutils.gen_random_blockage_mask(
@@ -339,7 +339,7 @@ def predict(model: nn.Module, case_loader: DataLoader):
 
         # Forward propagation
         ref = ref.to(args.device)
-        input_, truth = ref[:, 1:], ref[:, :1]
+        input_, truth = ref[:, 1:], torch.clip(ref[:, :1], min=0, max=70)
         input_ = input_.permute(0, 2, 3, 1).contiguous()
         output = model(input_).permute(0, 3, 1, 2).contiguous()
         masked_ref, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(

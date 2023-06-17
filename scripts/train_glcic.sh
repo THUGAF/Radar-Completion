@@ -1,6 +1,5 @@
 CUDA_VISIBLE_DEVICES=3 \
 nohup python -u train/train_glcic.py \
-    --train \
     --test \
     --predict \
     --early-stopping \

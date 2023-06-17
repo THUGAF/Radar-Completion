@@ -115,35 +115,33 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     for i in range(num_models):
         df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)), index_col=0)
         metrics.append(df.values)
-    metrics = np.stack(metrics)
+    metrics = np.stack(metrics).transpose(0, 2, 1)
 
-    num_subplot = len(df.index)
-    num_rows = (num_subplot + 1) // 2
-    fig = plt.figure(figsize=(2 * 6, num_rows * 4), dpi=300)
+    num_subplot = len(df.columns)
+    fig = plt.figure(figsize=(10, num_subplot * 4), dpi=300)
     for i in range(num_subplot):
-        ax = fig.add_subplot((num_subplot + 1) // 2, 2, i + 1)
-        if i < num_subplot - 2:
-            title = '{}~{} dBZ'.format(df.index[i], df.index[i + 1])
-        elif i == num_subplot - 2:
-            title = '>{} dBZ'.format(df.index[i])
-        else:
-            title = 'total'
-        ax.set_title(title, loc='right', fontsize=14)
-        x = np.arange(len(df.columns))
+        ax = fig.add_subplot(num_subplot, 1, i + 1)
+        labels = df.index
+        labels = ['{}~{}'.format(df.index[i], df.index[i + 1]) 
+                  for i in range(len(df.index) - 2)] + ['>{}'.format(df.index[-2])] + [df.index[-1]]
+        
+        if i == num_subplot - 1:
+            ax.set_xlabel('Radar Reflectivity Interval (dBZ)', labelpad=5, fontsize=14)
+        ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=14)
+        x = np.arange(len(df.index))
         width = 0.16
         for j in range(num_models):
             ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width,
                    label=model_names[j], color=plt.get_cmap('Set3').colors[j], edgecolor='k')
+        ax.set_xticks(x, labels=labels)
         ax.axhline(color='k', linestyle='--', linewidth=1)
-        ax.set_xticks(x, labels=df.columns.values)
         ax.tick_params(labelsize=12)
-        ax.set_ylabel('Error (dBZ)', fontsize=12)
         ax.text(-0.1, 1.05, '({})'.format(chr(97 + i)), fontsize=18, transform=ax.transAxes)
 
-    fig.subplots_adjust(bottom=0.06)
-    lax = fig.add_axes([0, 0, 1, 0.04])
+    fig.subplots_adjust(bottom=0.10)
+    lax = fig.add_axes([0, 0, 1, 0.05])
     lax.set_axis_off()
-    lax.legend(ax.containers, model_names, fontsize=14, loc='center', ncols=len(model_names),
+    lax.legend(ax.containers, model_names, fontsize=12, loc='center', ncols=len(model_names),
                edgecolor='w', fancybox=False)
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -156,10 +154,10 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
     for i in range(num_models):
         df = pd.read_csv(os.path.join(model_dirs[i], '{}_metrics.csv'.format(stage)), index_col=0)
         metrics.append(df.values)
-    metrics = np.stack(metrics)
+    metrics = np.stack(metrics).transpose(0, 2, 1)
     writer = pd.ExcelWriter(file_path, mode='w')
-    for i, idx in enumerate(df.index):
-        new_df = pd.DataFrame(metrics[:, i], index=model_names, columns=df.columns)
+    for i, idx in enumerate(df.columns):
+        new_df = pd.DataFrame(metrics[:, i], index=model_names, columns=df.index)
         new_df.to_excel(writer, sheet_name=idx, float_format='%.4f')
     writer.close()
     print('{} saved'.format(file_path))
@@ -170,8 +168,8 @@ if __name__ == '__main__':
     model_dirs = ['results/MLG', 'results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
     save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.xlsx')
     save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.xlsx')
-    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
     plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
     plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
+    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
     plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
     

@@ -8,5 +8,5 @@ nohup python -u train/test_bilinear.py \
     --case-indices 15451 \
     --case-anchor 160 \
     --case-blockage-len 40 \
-    --display-interval 50 \
+    --display-interval 10 \
     > results/test_bilinear.log 2>&1 &

@@ -1,6 +1,5 @@
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=1 \
 nohup python -u train/train_dsa_unet.py \
-    --train \
     --test \
     --predict \
     --early-stopping \

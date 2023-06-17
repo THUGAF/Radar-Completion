@@ -126,7 +126,7 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
                   for i in range(len(df.index) - 2)] + ['>{}'.format(df.index[-2])] + [df.index[-1]]
         
         if i == num_subplot - 1:
-            ax.set_xlabel('Radar Reflectivity Interval (dBZ)', labelpad=5, fontsize=14)
+            ax.set_xlabel('Radar Reflectivity (dBZ)', labelpad=5, fontsize=14)
         ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=14)
         x = np.arange(len(df.index))
         width = 0.16
@@ -139,7 +139,7 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
         ax.text(-0.1, 1.05, '({})'.format(chr(97 + i)), fontsize=18, transform=ax.transAxes)
 
     fig.subplots_adjust(bottom=0.10)
-    lax = fig.add_axes([0, 0, 1, 0.05])
+    lax = fig.add_axes([0.1, 0, 0.8, 0.05])
     lax.set_axis_off()
     lax.legend(ax.containers, model_names, fontsize=12, loc='center', ncols=len(model_names),
                edgecolor='w', fancybox=False)
@@ -164,7 +164,7 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 
 
 if __name__ == '__main__':
-    model_names = ['MLG', 'BI', 'GLCIC GAN', 'UNet++ GAN', 'DSA-UNet (Ours)']
+    model_names = ['MLG', 'BI', 'GLCIC', 'UNet++ GAN', 'DSA-UNet (Ours)']
     model_dirs = ['results/MLG', 'results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
     save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.xlsx')
     save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.xlsx')

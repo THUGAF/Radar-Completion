@@ -46,22 +46,22 @@ class CaseDataset(TrainingDataset):
 
     Args:
         root (str): Root directory for the dataset.
-        case_index (int): Index of the case. Default is None, meaning the last case is selected.
+        case_indices (int): Indices of the cases. Default is None, meaning the last case is selected.
         elevation_id (int or List[int]): ID of elevations.
         azimuth_range (List[int]): Range of azimuth. 
         radial_range (List[int]): Range of radial distance. 
     """
 
-    def __init__(self, root: str, case_index: int, elevation_id: Union[int, List[int]], 
+    def __init__(self, root: str, case_indices: int, elevation_id: Union[int, List[int]], 
                  azimuthal_range: List[int], radial_range: List[int]):
         super().__init__(root, elevation_id, azimuthal_range, radial_range)
-        self.case_index = case_index
+        self.case_indices = case_indices
         self.elevation_id = elevation_id
         self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
         
-    def __getitem__(self, index: int):
-        filename = self.files[self.case_index[index]]
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        filename = self.files[self.case_indices[index]]
         t, elev, ref = torch.load(filename)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuthal_range[0]: self.azimuthal_range[1], 
@@ -69,7 +69,7 @@ class CaseDataset(TrainingDataset):
         return t, elev, ref
 
     def __len__(self):
-        return 1
+        return len(self.case_indices)
 
 
 def load_data(root: str, batch_size: int, num_workers: int, train_ratio: float, valid_ratio: float, 

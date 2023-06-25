@@ -389,7 +389,7 @@ def predict(model: nn.Module, case_loader: DataLoader):
         ref = pad_azimuth(ref, args.padding_width)
         ref_norm = transform.minmax_norm(ref)
         masked_ref_norm, mask, anchor, blockage_len = maskutils.gen_fixed_blockage_mask(
-            ref_norm, args.azimuthal_range[0], args.case_anchor[i], args.case_blockage_len[i])
+            ref_norm, args.azimuthal_range[0], args.case_anchor[i] + args.padding_width, args.case_blockage_len[i])
         output_norm = model(torch.cat([masked_ref_norm, mask], dim=1))
         output_norm = masked_ref_norm[:, :1] + output_norm * (1 - mask[:, :1])
 
@@ -421,8 +421,8 @@ def predict(model: nn.Module, case_loader: DataLoader):
         
         # Plot tensors
         visualizer.plot_ppi(tensors, t, args.azimuthal_range[0], args.radial_range[0],
-                            anchor, blockage_len, args.output_path, 'case_{}'.format(i))
-        visualizer.plot_psd(tensors, args.radial_range[0], anchor, blockage_len,
+                            anchor - args.padding_width, blockage_len, args.output_path, 'case_{}'.format(i))
+        visualizer.plot_psd(tensors, args.radial_range[0], anchor - args.padding_width, blockage_len,
                             args.output_path, 'case_{}'.format(i))
         print('Figures saved')
 

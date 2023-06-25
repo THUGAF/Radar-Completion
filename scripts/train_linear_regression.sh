@@ -11,8 +11,8 @@ nohup python -u train/train_linear_regression.py \
     --num-threads 8 \
     --num-workers 8 \
     --learning-rate 1e-3 \
-    --case-indices 15451 \
-    --case-anchor 160 \
-    --case-blockage-len 40 \
+    --case-indices 13500 15451 \
+    --case-anchor 270 40 \
+    --case-blockage-len 40 40 \
     --display-interval 10 \
     > results/train_linear_regression.log 2>&1 &

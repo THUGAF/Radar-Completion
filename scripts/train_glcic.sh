@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=3 \
+CUDA_VISIBLE_DEVICES=2 \
 nohup python -u train/train_glcic.py \
     --test \
     --predict \
@@ -14,8 +14,8 @@ nohup python -u train/train_glcic.py \
     --learning-rate 1e-4 \
     --weight-decay 1e-2 \
     --weight-recon 100 \
-    --case-indices 15451 \
-    --case-anchor 160 \
-    --case-blockage-len 40 \
+    --case-indices 13500 15451 \
+    --case-anchor 270 40 \
+    --case-blockage-len 40 40 \
     --display-interval 50 \
     > results/train_glcic.log 2>&1 &

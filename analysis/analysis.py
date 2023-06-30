@@ -15,8 +15,8 @@ NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), CMAP.N)
 
 AZIMUTH_START_POINT = 0
 RADIAL_START_POINT = 0
-ANCHOR = [160]
-BLOCKAGE_LEN = [40]
+ANCHOR = [270, 40]
+BLOCKAGE_LEN = [40, 40]
 
 
 def plot_ppis(model_names, model_dirs, stage, img_path):
@@ -37,7 +37,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
         else:
             tensor = torch.load(os.path.join(model_dirs[i - 1], '{}.pt'.format(stage)))[0, 0]
         ax = fig.add_subplot(2, num_rows, i + 1, projection='polar')
-        title = 'Truth' if i == 0 else model_names[i - 1]
+        title = 'Observation' if i == 0 else model_names[i - 1]
         ax.grid(False)
         ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
         anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
@@ -48,7 +48,8 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
                 '--', color='k', linewidth=1)
 
-        ax.set_title(title, loc='left', fontdict={'size': 20, 'weight': 'bold'})
+        ax.set_title('({})'.format(format(chr(97 + i))), loc='left', fontsize=20)
+        ax.set_title(title, loc='center', fontsize=20)
         ax.set_xlim(AZIMUTH_START_POINT / 180 * np.pi, (AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi)
         ax.set_rlim(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
         ax.set_theta_zero_location('N')
@@ -79,7 +80,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     
     ax1.plot(wavelength_radial, truth_psd_radial, color='k')
     ax2.plot(wavelength_azimuthal, truth_psd_azimuthal, color='k')
-    legend = ['Truth']
+    legend = ['Observation']
     for i in range(len(model_names)):
         psd_df_radial = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_radial.csv'.format(stage)))
         psd_df_azimuthal = pd.read_csv(os.path.join(model_dirs[i], '{}_psd_azimuthal.csv'.format(stage)))
@@ -166,10 +167,11 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 if __name__ == '__main__':
     model_names = ['MLG', 'BI', 'GLCIC', 'UNet++ GAN', 'DSA-UNet (Ours)']
     model_dirs = ['results/MLG', 'results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
-    save_metrics(model_names, model_dirs, 'case_0', 'results/case_0_metrics.xlsx')
-    save_metrics(model_names, model_dirs, 'test', 'results/test_metrics.xlsx')
-    plot_bars(model_names, model_dirs, 'case_0', 'results/bar_case_0.jpg')
-    plot_bars(model_names, model_dirs, 'test', 'results/bar_test.jpg')
-    plot_ppis(model_names, model_dirs, 'case_0', 'results/ppi_case_0.jpg')
-    plot_psd(model_names, model_dirs, 'case_0', 'results/psd_case_0.jpg')
+    stages = ['test', 'case_0', 'case_1']
+    for stage in stages:
+        save_metrics(model_names, model_dirs, stage, 'results/img/{}_metrics.xlsx'.format(stage))
+        plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
+        if stage != 'test':
+            plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
+            plot_psd(model_names, model_dirs, stage, 'results/img/psd_{}.jpg'.format(stage))
     

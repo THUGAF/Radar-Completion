@@ -5,6 +5,8 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib.colors as pcolors
 import matplotlib.cm as cm
+import matplotlib.ticker as ticker
+from scipy.stats import gaussian_kde
 
 
 plt.rcParams['font.sans-serif'] = 'Arial'
@@ -22,25 +24,26 @@ BLOCKAGE_LEN = [40, 40]
 def plot_ppis(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names) + 1
-    num_rows = (num_subplot + 1) // 2
-    fig = plt.figure(figsize=(num_rows * 6, 6 * 2), dpi=300)
+    num_row = (num_subplot + 1) // 2
+    fig = plt.figure(figsize=(num_row * 6, 6 * 2), dpi=300)
     
     truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 1]
     azimuth_size, radial_size = truth.size(0), truth.size(1)
     thetas = np.arange(AZIMUTH_START_POINT, AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi
     rhos = np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)
+    anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
+    truth = np.clip(truth, a_min=0, a_max=70)
     
     for i in range(num_subplot):
         if i == 0:
             tensor = truth
         else:
             tensor = torch.load(os.path.join(model_dirs[i - 1], '{}.pt'.format(stage)))[0, 0]
-        ax = fig.add_subplot(2, num_rows, i + 1, projection='polar')
+        ax = fig.add_subplot(2, num_row, i + 1, projection='polar')
         title = 'Observation' if i == 0 else model_names[i - 1]
         ax.grid(False)
         ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
-        anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
         ax.plot(np.ones(radial_size) * (anchor + AZIMUTH_START_POINT) / 180 * np.pi, 
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
                 '--', color='k', linewidth=1)
@@ -65,6 +68,60 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
+
+
+def plot_css(model_names, model_dirs, stage, img_path):
+    print('Plotting {} ...'.format(img_path))
+    num_subplot = len(model_names) + 1
+    num_row = (num_subplot + 1) // 2
+    fig = plt.figure(figsize=(num_row * 4, 4 * 2), dpi=300)
+
+    truth = torch.load(os.path.join(model_dirs[0], '{}.pt'.format(stage)))[0, 1]
+    azimuth_size, radial_size = truth.size(0), truth.size(1)
+    thetas = np.arange(AZIMUTH_START_POINT, AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi
+    rhos = np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
+    thetas, rhos = np.meshgrid(thetas, rhos)
+    anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
+    xs = truth[AZIMUTH_START_POINT + anchor: AZIMUTH_START_POINT + anchor + blockage_len, 
+               RADIAL_START_POINT: RADIAL_START_POINT + radial_size]
+    xs = xs.numpy().flatten()
+    xs = np.clip(xs, a_min=0, a_max=70)
+
+    for i in range(num_subplot - 1):
+        pred = torch.load(os.path.join(model_dirs[i], '{}.pt'.format(stage)))[0, 0]
+        ys = pred[AZIMUTH_START_POINT + anchor: AZIMUTH_START_POINT + anchor + blockage_len,
+                  RADIAL_START_POINT: RADIAL_START_POINT + radial_size]
+        ys = ys.numpy().flatten()
+        ys = np.clip(ys, a_min=0, a_max=70)
+        data = np.vstack([xs, ys])
+        kde = gaussian_kde(data)
+        density = kde.evaluate(data)
+        ax = fig.add_subplot(2, num_row, i + 1)
+        sc = ax.scatter(xs, ys, c=density, s=10, cmap='jet', norm=pcolors.Normalize(0, np.max(density)))
+        
+        ax.set_xlim([0, 60])
+        ax.set_ylim([0, 60])
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
+        ax.axline((0, 0), (1, 1), color='k', linewidth=1, transform=ax.transAxes)
+        ax.set_aspect('equal')
+        ax.set_title(model_names[i], loc='center', fontsize=14, y=0.9)
+        ax.set_title(' ({})'.format(format(chr(97 + i))), fontsize=14, loc='left', y=0.9)
+        ax.set_xlabel('Observation (dBZ)', fontsize=14)
+        if i == 0 or i == 3:
+            ax.set_ylabel('Prediction (dBZ)', fontsize=14, labelpad=10)
+        ax.tick_params(labelsize=12)
+        
+    cax = fig.add_subplot(2, num_row, num_subplot)
+    cax.set_position([cax.get_position().x0, cax.get_position().y0,
+                      cax.get_position().width * 0.1, cax.get_position().height])
+    cbar = fig.colorbar(sc, cax=cax, orientation='vertical')
+    cbar.set_label('Probability Density', fontsize=14, labelpad=20)
+    cbar.ax.tick_params(labelsize=12)
+
+    fig.savefig(img_path, bbox_inches='tight')
+    print('{} saved'.format(img_path))
+    plt.close(fig)
 
 
 def plot_psd(model_names, model_dirs, stage, img_path):
@@ -173,5 +230,6 @@ if __name__ == '__main__':
         plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
         if stage != 'test':
             plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
+            plot_css(model_names, model_dirs, stage, 'results/img/cs_{}.jpg'.format(stage))
             plot_psd(model_names, model_dirs, stage, 'results/img/psd_{}.jpg'.format(stage))
     

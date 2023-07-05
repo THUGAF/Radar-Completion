@@ -228,9 +228,9 @@ if __name__ == '__main__':
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
         save_metrics(model_names, model_dirs, stage, 'results/img/{}_metrics.xlsx'.format(stage))
-        # plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
+        plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
         if stage != 'test':
-            # plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
-            # plot_css(model_names, model_dirs, stage, 'results/img/cs_{}.jpg'.format(stage))
+            plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
+            plot_css(model_names, model_dirs, stage, 'results/img/cs_{}.jpg'.format(stage))
             plot_psd(model_names, model_dirs, stage, 'results/img/psd_{}.jpg'.format(stage))
     

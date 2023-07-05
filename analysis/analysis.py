@@ -149,18 +149,18 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
-    ax1.set_xlabel('Wave Length (km)', fontsize='large')
-    ax1.set_ylabel('Radial power spectral density', fontsize='large')
-    ax1.legend(legend, loc='lower left', fontsize='small', edgecolor='w', fancybox=False)
-    ax1.text(-0.1, 1.05, '(a)', fontsize=18, transform=ax1.transAxes)
+    ax1.set_xlabel('Wave Length (km)', fontsize=12)
+    ax1.set_ylabel('Radial power spectral density', fontsize=12)
+    ax1.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
+    ax1.text(-0.1, 1.05, '(a)', fontsize=14, transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
-    ax2.set_xlabel('Wave Length (deg)', fontsize='large')
-    ax2.set_ylabel('Azimuthal power spectral density', fontsize='large')
-    ax2.legend(legend, loc='lower left', fontsize='small', edgecolor='w', fancybox=False)
-    ax2.text(-0.1, 1.05, '(b)', fontsize=18, transform=ax2.transAxes)
+    ax2.set_xlabel('Wave Length (deg)', fontsize=12)
+    ax2.set_ylabel('Azimuthal power spectral density', fontsize=12)
+    ax2.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
+    ax2.text(-0.1, 1.05, '(b)', fontsize=14, transform=ax2.transAxes)
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -228,9 +228,9 @@ if __name__ == '__main__':
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
         save_metrics(model_names, model_dirs, stage, 'results/img/{}_metrics.xlsx'.format(stage))
-        plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
+        # plot_bars(model_names, model_dirs, stage, 'results/img/bar_{}.jpg'.format(stage))
         if stage != 'test':
-            plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
-            plot_css(model_names, model_dirs, stage, 'results/img/cs_{}.jpg'.format(stage))
+            # plot_ppis(model_names, model_dirs, stage, 'results/img/ppi_{}.jpg'.format(stage))
+            # plot_css(model_names, model_dirs, stage, 'results/img/cs_{}.jpg'.format(stage))
             plot_psd(model_names, model_dirs, stage, 'results/img/psd_{}.jpg'.format(stage))
     

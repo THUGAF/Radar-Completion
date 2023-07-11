@@ -60,8 +60,9 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
         ax.grid(True, linewidth=1)
         ax.tick_params(labelsize=16)
     
-    fig.subplots_adjust(right=0.90)
-    cax = fig.add_axes([0.94, 0.14, 0.01, 0.72])
+    cax = fig.add_subplot(2, num_row, num_subplot + 1)
+    cax.set_position([cax.get_position().x0, cax.get_position().y0,
+                      cax.get_position().width * 0.05, cax.get_position().height])
     cbar = fig.colorbar(cm.ScalarMappable(cmap=CMAP, norm=NORM), cax=cax, orientation='vertical')
     cbar.set_label('dBZ', fontsize=20, labelpad=20)
     cbar.ax.tick_params(labelsize=18)
@@ -72,7 +73,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
 
 def plot_css(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
-    num_subplot = len(model_names) + 1
+    num_subplot = len(model_names)
     num_row = (num_subplot + 1) // 2
     fig = plt.figure(figsize=(num_row * 4, 4 * 2), dpi=300)
 
@@ -87,7 +88,8 @@ def plot_css(model_names, model_dirs, stage, img_path):
     xs = xs.numpy().flatten()
     xs = np.clip(xs, a_min=0, a_max=70)
 
-    for i in range(num_subplot - 1):
+    xs_list, ys_list, density_list = [], [], []
+    for i in range(num_subplot):
         pred = torch.load(os.path.join(model_dirs[i], '{}.pt'.format(stage)))[0, 0]
         ys = pred[AZIMUTH_START_POINT + anchor: AZIMUTH_START_POINT + anchor + blockage_len,
                   RADIAL_START_POINT: RADIAL_START_POINT + radial_size]
@@ -96,8 +98,17 @@ def plot_css(model_names, model_dirs, stage, img_path):
         data = np.vstack([xs, ys])
         kde = gaussian_kde(data)
         density = kde.evaluate(data)
+        xs_list.append(xs)
+        ys_list.append(ys)
+        density_list.append(density)
+
+    xs_array = np.array(xs_list)
+    ys_array = np.array(ys_list)
+    density_array = np.array(density_list)
+    for i in range(num_subplot):
         ax = fig.add_subplot(2, num_row, i + 1)
-        sc = ax.scatter(xs, ys, c=density, s=10, cmap='jet', norm=pcolors.Normalize(0, np.max(density)))
+        sc = ax.scatter(xs_array[i], ys_array[i], c=density_array[i], s=10, cmap='jet',
+                        norm=pcolors.Normalize(0, np.max(density_array)))
         
         ax.set_xlim([0, 60])
         ax.set_ylim([0, 60])
@@ -108,13 +119,12 @@ def plot_css(model_names, model_dirs, stage, img_path):
         ax.set_title(model_names[i], loc='center', fontsize=14, y=0.9)
         ax.set_title(' ({})'.format(format(chr(97 + i))), fontsize=14, loc='left', y=0.9)
         ax.set_xlabel('Observation (dBZ)', fontsize=14)
-        if i == 0 or i == 3:
+        if i == 0 or i == 2:
             ax.set_ylabel('Prediction (dBZ)', fontsize=14, labelpad=10)
         ax.tick_params(labelsize=12)
         
-    cax = fig.add_subplot(2, num_row, num_subplot)
-    cax.set_position([cax.get_position().x0, cax.get_position().y0,
-                      cax.get_position().width * 0.1, cax.get_position().height])
+    fig.subplots_adjust(right=0.92)
+    cax = fig.add_axes([0.94, 0.20, 0.02, 0.60])
     cbar = fig.colorbar(sc, cax=cax, orientation='vertical')
     cbar.set_label('Probability Density', fontsize=14, labelpad=20)
     cbar.ax.tick_params(labelsize=12)
@@ -149,7 +159,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
-    ax1.set_xlabel('Wave Length (km)', fontsize=12)
+    ax1.set_xlabel('Wavelength (km)', fontsize=12)
     ax1.set_ylabel('Radial power spectral density', fontsize=12)
     ax1.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
     ax1.text(-0.1, 1.05, '(a)', fontsize=14, transform=ax1.transAxes)
@@ -157,7 +167,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
-    ax2.set_xlabel('Wave Length (deg)', fontsize=12)
+    ax2.set_xlabel('Wavelength (deg)', fontsize=12)
     ax2.set_ylabel('Azimuthal power spectral density', fontsize=12)
     ax2.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
     ax2.text(-0.1, 1.05, '(b)', fontsize=14, transform=ax2.transAxes)
@@ -223,8 +233,8 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 
 
 if __name__ == '__main__':
-    model_names = ['MLG', 'BI', 'GLCIC', 'UNet++ GAN', 'DSA-UNet (Ours)']
-    model_dirs = ['results/MLG', 'results/Bilinear', 'results/GLCIC', 'results/UNetpp_GAN', 'results/DSA_UNet']
+    model_names = ['MLG', 'BI', 'UNet++ GAN', 'DSA-UNet (Ours)']
+    model_dirs = ['results/MLG', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
         save_metrics(model_names, model_dirs, stage, 'results/img/{}_metrics.xlsx'.format(stage))

@@ -4,6 +4,7 @@ sys.path.append(os.getcwd())
 import time
 import random
 import argparse
+import datetime
 import numpy as np
 import pandas as pd
 import torch
@@ -158,6 +159,8 @@ def test(test_loader):
 def predict(case_loader: DataLoader):
     print('\n[Predict]')
     for i, (t, elev, ref) in enumerate(case_loader):
+        t = datetime.datetime.strptime(
+            str(t.item()), '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
         print('\nCase {} at {}'.format(i, t))
         metrics = {}
 

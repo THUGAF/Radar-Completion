@@ -23,7 +23,7 @@ class TrainingDataset(Dataset):
         self.elevation_id = elevation_id
         self.azimuthal_range = azimuthal_range
         self.radial_range = radial_range
-        self.files = sorted(glob.glob(os.path.join(root, '*/*.pt')))
+        self.files = sorted(glob.glob(os.path.join(root, '*/*.npz')))
         self.files = self.files * augment_ratio
         if augment_ratio > 1:
             self.files = np.reshape(self.files, (augment_ratio, -1))
@@ -31,7 +31,9 @@ class TrainingDataset(Dataset):
 
     def __getitem__(self, index: int):
         filename = self.files[index]
-        t, elev, ref = torch.load(filename)
+        npz_array = np.load(filename, allow_pickle=True)
+        t, elev, ref = npz_array['t'], npz_array['elev'], npz_array['ref']
+        t, elev, ref = torch.from_numpy(t), torch.from_numpy(elev), torch.from_numpy(ref)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuthal_range[0]: self.azimuthal_range[1], 
                   self.radial_range[0]: self.radial_range[1]]
@@ -62,7 +64,9 @@ class CaseDataset(TrainingDataset):
         
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         filename = self.files[self.case_indices[index]]
-        t, elev, ref = torch.load(filename)
+        npz_array = np.load(filename, allow_pickle=True)
+        t, elev, ref = npz_array['t'], npz_array['elev'], npz_array['ref']
+        t, elev, ref = torch.from_numpy(t), torch.from_numpy(elev), torch.from_numpy(ref)
         elev, ref = elev[self.elevation_id], ref[self.elevation_id]
         ref = ref[:, self.azimuthal_range[0]: self.azimuthal_range[1], 
                   self.radial_range[0]: self.radial_range[1]]

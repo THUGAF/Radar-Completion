@@ -3,7 +3,7 @@ nohup python -u train/train_linear_regression.py \
     --test \
     --predict \
     --early-stopping \
-    --data-path /data/gaf/SBandBasicPt \
+    --data-path /data/gaf/SBandRawNPZ \
     --output-path results/MLG \
     --elevation-id 1 2 3 4 5 6 7 8 \
     --max-iterations 100000 \

@@ -1,5 +1,5 @@
 nohup python -u train/test_bilinear.py \
-    --data-path /data/gaf/SBandBasicPt \
+    --data-path /data/gaf/SBandRawNPZ \
     --output-path results/Bilinear \
     --test \
     --predict \

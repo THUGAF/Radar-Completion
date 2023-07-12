@@ -3,7 +3,7 @@ nohup python -u train/train_dsa_unet.py \
     --test \
     --predict \
     --early-stopping \
-    --data-path /data/gaf/SBandBasicPt \
+    --data-path /data/gaf/SBandRawNPZ \
     --output-path results/DSA_UNet \
     --elevation-id 1 2 3 \
     --max-iterations 100000 \

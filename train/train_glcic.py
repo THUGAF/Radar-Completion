@@ -5,6 +5,7 @@ import time
 import shutil
 import random
 import argparse
+import datetime
 import numpy as np
 import pandas as pd
 import torch
@@ -464,6 +465,8 @@ def predict(model: nn.Module, case_loader: DataLoader):
     model.generator.load_state_dict(states['generator'])
     model.eval()
     for i, (t, elev, ref) in enumerate(case_loader):
+        t = datetime.datetime.strptime(
+            str(t.item()), '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
         print('\nCase {} at {}'.format(i, t))
         metrics = {}
 

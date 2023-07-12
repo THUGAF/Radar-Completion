@@ -197,7 +197,7 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
             ax.set_xlabel('Radar Reflectivity (dBZ)', labelpad=5, fontsize=14)
         ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=14)
         x = np.arange(len(df.index))
-        width = 0.18
+        width = 0.2
         for j in range(num_models):
             b = ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width,
                    label=model_names[j], color=plt.get_cmap('Set3').colors[j], edgecolor='k')

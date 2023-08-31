@@ -6,6 +6,8 @@ import torch.nn.functional as F
 def evaluate_mae(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     mae = F.l1_loss(pred[mask], truth[mask]).item()
     return mae
@@ -14,6 +16,8 @@ def evaluate_mae(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) ->
 def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     rmse = torch.sqrt(F.mse_loss(pred[mask], truth[mask])).item()
     return rmse
@@ -22,6 +26,8 @@ def evaluate_rmse(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -
 def evaluate_mbe(pred: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor) -> float:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     mbe = torch.mean(pred[mask] - truth[mask]).item()
     return mbe
@@ -31,6 +37,8 @@ def evaluate_mae_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask:
                                   thresholds: list = [0, 10, 20, 30, 40]) -> Tuple[list, list]:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     maes = []
     for i, threshold in enumerate(thresholds):
@@ -52,6 +60,8 @@ def evaluate_rmse_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask
                                    thresholds: list = [0, 10, 20, 30, 40]) -> Tuple[list, list]:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     rmses = []
     for i, threshold in enumerate(thresholds):
@@ -73,6 +83,8 @@ def evaluate_mbe_multi_thresholds(pred: torch.Tensor, truth: torch.Tensor, mask:
                                   thresholds: list = [0, 10, 20, 30, 40]) -> Tuple[list, list]:
     assert pred.size() == truth.size()
     pred, truth = pred.cpu(), truth.cpu()
+    pred = torch.clip(pred, min=0, max=70)
+    truth = torch.clip(truth, min=0, max=70)
     mask = torch.logical_not(mask.bool())
     mbes = []
     for i, threshold in enumerate(thresholds):

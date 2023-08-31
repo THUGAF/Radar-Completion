@@ -17,7 +17,7 @@ NORM = pcolors.BoundaryNorm(np.linspace(0.0, 75.0, 16), CMAP.N)
 
 AZIMUTH_START_POINT = 0
 RADIAL_START_POINT = 0
-ANCHOR = [270, 40]
+ANCHOR = [315, 40]
 BLOCKAGE_LEN = [40, 40]
 
 
@@ -46,10 +46,10 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
         ax.pcolormesh(thetas, rhos, tensor.T, cmap=CMAP, norm=NORM)
         ax.plot(np.ones(radial_size) * (anchor + AZIMUTH_START_POINT) / 180 * np.pi, 
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
-                '--', color='k', linewidth=1)
+                '--', color='k', linewidth=2)
         ax.plot(np.ones(radial_size) * (anchor + blockage_len + AZIMUTH_START_POINT) / 180 * np.pi, 
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
-                '--', color='k', linewidth=1)
+                '--', color='k', linewidth=2)
 
         ax.set_title('({})'.format(format(chr(97 + i))), loc='left', fontsize=20)
         ax.set_title(title, loc='center', fontsize=20)
@@ -105,13 +105,13 @@ def plot_css(model_names, model_dirs, stage, img_path):
     xs_array = np.array(xs_list)
     ys_array = np.array(ys_list)
     density_array = np.array(density_list)
+    
     for i in range(num_subplot):
         ax = fig.add_subplot(2, num_row, i + 1)
         sc = ax.scatter(xs_array[i], ys_array[i], c=density_array[i], s=10, cmap='jet',
-                        norm=pcolors.Normalize(0, np.max(density_array)))
-        
-        ax.set_xlim([0, 60])
-        ax.set_ylim([0, 60])
+                        norm=pcolors.Normalize(0, np.max(density_array)))        
+        ax.set_xlim([-2, 60])
+        ax.set_ylim([-2, 60])
         ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
         ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
         ax.axline((0, 0), (1, 1), color='k', linewidth=1, transform=ax.transAxes)
@@ -126,7 +126,7 @@ def plot_css(model_names, model_dirs, stage, img_path):
     fig.subplots_adjust(right=0.92)
     cax = fig.add_axes([0.94, 0.20, 0.02, 0.60])
     cbar = fig.colorbar(sc, cax=cax, orientation='vertical')
-    cbar.set_label('Probability Density', fontsize=14, labelpad=20)
+    cbar.set_label('Density', fontsize=14, labelpad=20)
     cbar.ax.tick_params(labelsize=12)
 
     fig.savefig(img_path, bbox_inches='tight')
@@ -159,16 +159,16 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
-    ax1.set_xlabel('Wavelength (km)', fontsize=12)
-    ax1.set_ylabel('Radial power spectral density', fontsize=12)
+    ax1.set_xlabel('Radial Wavelength (km)', fontsize=12)
+    ax1.set_ylabel('Radial Power Spectral Density', fontsize=12)
     ax1.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
     ax1.text(-0.1, 1.05, '(a)', fontsize=14, transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
-    ax2.set_xlabel('Wavelength (deg)', fontsize=12)
-    ax2.set_ylabel('Azimuthal power spectral density', fontsize=12)
+    ax2.set_xlabel('Azimuthal Wavelength (deg)', fontsize=12)
+    ax2.set_ylabel('Azimuthal Power Spectral Density', fontsize=12)
     ax2.legend(legend, loc='lower left', fontsize=10, edgecolor='w', fancybox=False)
     ax2.text(-0.1, 1.05, '(b)', fontsize=14, transform=ax2.transAxes)
 

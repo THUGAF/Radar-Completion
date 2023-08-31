@@ -320,7 +320,7 @@ def test(model: nn.Module, test_loader: DataLoader):
     # Save metrics
     for key in metrics.keys():
         metrics[key] /= len(test_loader)
-    index = [str(t) for t in thresholds] + ['total']
+    index = [str(t) for t in thresholds] + ['overall']
     df = pd.DataFrame(data=metrics, index=index)
     df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), float_format='%.4f')
     print('Test metrics saved')
@@ -360,7 +360,7 @@ def predict(model: nn.Module, case_loader: DataLoader):
         metrics['RMSE'] = np.append(rmses, total_rmse)
         metrics['MBE'] = np.append(mbes, total_mbe)
 
-        index = [str(t) for t in thresholds] + ['total']
+        index = [str(t) for t in thresholds] + ['overall']
         df = pd.DataFrame(data=metrics, index=index)
         df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), float_format='%.4f')
         print('Case {} metrics saved'.format(i))

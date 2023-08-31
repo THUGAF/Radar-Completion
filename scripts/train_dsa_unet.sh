@@ -15,7 +15,7 @@ nohup python -u train/train_dsa_unet.py \
     --weight-decay 1e-4 \
     --weight-recon 100 \
     --case-indices 13500 15451 \
-    --case-anchor 270 40 \
+    --case-anchor 315 40 \
     --case-blockage-len 40 40 \
     --display-interval 50 \
     > results/train_dsa_unet.log 2>&1 &

@@ -92,8 +92,8 @@ def biliear_interp(masked_ref: torch.Tensor, azimuth_start_point: int, anchor: i
                    blockage_len: int) -> torch.Tensor:
     batch_size, _, azimuthal_len, radial_len = masked_ref.size()
     unmasked_ref = torch.cat([masked_ref[:, :, : anchor - azimuth_start_point], 
-                              masked_ref[:, :, anchor + blockage_len - azimuth_start_point:]], 
-                              dim=2)
+                            masked_ref[:, :, anchor + blockage_len - azimuth_start_point:]], 
+                            dim=2)
     b, c, r = np.arange(batch_size), np.arange(1), np.arange(radial_len)
     a = np.concatenate([np.arange(anchor - azimuth_start_point),
                         np.arange(anchor + blockage_len - azimuth_start_point, azimuthal_len)])
@@ -149,7 +149,7 @@ def test(test_loader):
     # Save metrics
     for key in metrics.keys():
         metrics[key] /= len(test_loader)
-    index = [str(t) for t in thresholds] + ['total']
+    index = [str(t) for t in thresholds] + ['overall']
     df = pd.DataFrame(data=metrics, index=index)
     df.to_csv(os.path.join(args.output_path, 'test_metrics.csv'), float_format='%.4f')
     print('Test metrics saved')
@@ -183,7 +183,7 @@ def predict(case_loader: DataLoader):
         metrics['RMSE'] = np.append(rmses, total_rmse)
         metrics['MBE'] = np.append(mbes, total_mbe)
 
-        index = [str(t) for t in thresholds] + ['total']
+        index = [str(t) for t in thresholds] + ['overall']
         df = pd.DataFrame(data=metrics, index=index)
         df.to_csv(os.path.join(args.output_path, 'case_{}_metrics.csv'.format(i)), float_format='%.4f')
         print('Case {} metrics saved'.format(i))

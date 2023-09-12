@@ -314,9 +314,9 @@ def train(model: nn.Module, optimizer: optim.Optimizer, train_loader: DataLoader
 def test(model: nn.Module, test_loader: DataLoader):
     # Init metric dict
     metrics = {}
-    metrics['MAE'] = 0
-    metrics['RMSE'] = 0
-    metrics['MBE'] = 0
+    metrics['WMAE'] = 0
+    metrics['WRMSE'] = 0
+    metrics['WMBE'] = 0
 
     # Test
     print('\n[Test]')
@@ -351,15 +351,15 @@ def test(model: nn.Module, test_loader: DataLoader):
 
         # Evaluation
         truth = torch.clip(ref[:, :1], min=0, max=70)
-        total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
-        total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
-        total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
-        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(output, truth, mask[:, :1])
-        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(output, truth, mask[:, :1])
-        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(output, truth, mask[:, :1])
-        metrics['MAE'] += np.append(maes, total_mae)
-        metrics['RMSE'] += np.append(rmses, total_rmse)
-        metrics['MBE'] += np.append(mbes, total_mbe)
+        total_wmae = evaluation.evaluate_wmae(output, truth, mask[:, :1])
+        total_wrmse = evaluation.evaluate_wrmse(output, truth, mask[:, :1])
+        total_wmbe = evaluation.evaluate_wmbe(output, truth, mask[:, :1])
+        thresholds, wmaes = evaluation.evaluate_wmae_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, wrmses = evaluation.evaluate_wrmse_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, wmbes = evaluation.evaluate_wmbe_multi_thresholds(output, truth, mask[:, :1])
+        metrics['WMAE'] += np.append(wmaes, total_wmae)
+        metrics['WRMSE'] += np.append(wrmses, total_wrmse)
+        metrics['WMBE'] += np.append(wmbes, total_wmbe)
 
     # Print test time
     print('Time: {:.4f}'.format(time.time() - test_timer))
@@ -402,15 +402,15 @@ def predict(model: nn.Module, case_loader: DataLoader):
 
         # Evaluation
         truth = torch.clip(ref[:, :1], min=0, max=70)
-        total_mae = evaluation.evaluate_mae(output, truth, mask[:, :1])
-        total_rmse = evaluation.evaluate_rmse(output, truth, mask[:, :1])
-        total_mbe = evaluation.evaluate_mbe(output, truth, mask[:, :1])
-        thresholds, maes = evaluation.evaluate_mae_multi_thresholds(output, truth, mask[:, :1])
-        thresholds, rmses = evaluation.evaluate_rmse_multi_thresholds(output, truth, mask[:, :1])
-        thresholds, mbes = evaluation.evaluate_mbe_multi_thresholds(output, truth, mask[:, :1])
-        metrics['MAE'] = np.append(maes, total_mae)
-        metrics['RMSE'] = np.append(rmses, total_rmse)
-        metrics['MBE'] = np.append(mbes, total_mbe)
+        total_wmae = evaluation.evaluate_wmae(output, truth, mask[:, :1])
+        total_wrmse = evaluation.evaluate_wrmse(output, truth, mask[:, :1])
+        total_wmbe = evaluation.evaluate_wmbe(output, truth, mask[:, :1])
+        thresholds, wmaes = evaluation.evaluate_wmae_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, wrmses = evaluation.evaluate_wrmse_multi_thresholds(output, truth, mask[:, :1])
+        thresholds, wmbes = evaluation.evaluate_wmbe_multi_thresholds(output, truth, mask[:, :1])
+        metrics['WMAE'] = np.append(wmaes, total_wmae)
+        metrics['WRMSE'] = np.append(wrmses, total_wrmse)
+        metrics['WMBE'] = np.append(wmbes, total_wmbe)
 
         index = [str(t) for t in thresholds] + ['overall']
         df = pd.DataFrame(data=metrics, index=index)

@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=2 \
+CUDA_VISIBLE_DEVICES=1 \
 nohup python -u train/train_unetpp_gan.py \
     --test \
     --predict \

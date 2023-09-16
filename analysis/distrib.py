@@ -10,12 +10,12 @@ plt.rcParams['font.sans-serif'] = 'Arial'
 plt.rcParams['axes.unicode_minus'] = False
 def get_dataset(root: str):
     filenames = sorted(glob.glob(os.path.join(root, '*/*.npz')))
-    total_ref = []
-    for filename in tqdm.tqdm(filenames):
-        ref = np.load(filename)['ref']
-        ref = ref[1][:, :80]
-        total_ref.append(ref)
-    total_ref = np.stack(total_ref).numpy()
+    ref = np.load(filenames[0])['ref'][1][:, :80]
+    total_ref = np.zeros((len(filenames),) + ref.shape)
+    for i, filename in enumerate(tqdm.tqdm(filenames)):
+        ref = np.load(filename)['ref'][1][:, :80]
+        ref = ref
+        total_ref[i] = ref
     return total_ref
 
 
@@ -55,4 +55,3 @@ def draw_distrib(data: np.ndarray, img_path: str):
 if __name__ == '__main__':
     total_ref = get_dataset('/data/gaf/SBandRawNPZ')
     draw_distrib(total_ref, 'results/distrib.jpg')
-

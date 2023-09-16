@@ -1,3 +1,5 @@
-# Weather Radar Data Completion with Generative Adversarial Networks
+# Improving the Completion of Weather Radar Missing Data with Deep Learning
 
-Apply generative adversarial networks (GANs) to weather radar data completion
+A PyTorch implementation for improving the completion of weather radar missing data with deep learning.
+
+More details are coming soon.

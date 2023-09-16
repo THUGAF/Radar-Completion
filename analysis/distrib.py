@@ -1,20 +1,21 @@
 import os
 import glob
 import tqdm
-import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
 plt.rcParams['font.sans-serif'] = 'Arial'
+plt.rcParams['axes.unicode_minus'] = False
 def get_dataset(root: str):
-    filenames = sorted(glob.glob(os.path.join(root, '*/*.pt')))
+    filenames = sorted(glob.glob(os.path.join(root, '*/*.npz')))
     total_ref = []
     for filename in tqdm.tqdm(filenames):
-        ref = torch.load(filename)[2][1][:, :80]
+        ref = np.load(filename)['ref']
+        ref = ref[1][:, :80]
         total_ref.append(ref)
-    total_ref = torch.stack(total_ref).numpy()
+    total_ref = np.stack(total_ref).numpy()
     return total_ref
 
 
@@ -52,6 +53,6 @@ def draw_distrib(data: np.ndarray, img_path: str):
 
 
 if __name__ == '__main__':
-    total_ref = get_dataset('/data/gaf/SBandBasicPt')
+    total_ref = get_dataset('/data/gaf/SBandRawNPZ')
     draw_distrib(total_ref, 'results/distrib.jpg')
 

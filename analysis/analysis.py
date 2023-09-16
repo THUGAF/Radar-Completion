@@ -10,6 +10,7 @@ from scipy.stats import gaussian_kde
 
 
 plt.rcParams['font.sans-serif'] = 'Arial'
+plt.rcParams['axes.unicode_minus'] = False
 CMAP = pcolors.ListedColormap(['#ffffff', '#2aedef', '#1caff4', '#0a22f4', '#29fd2f',
                                '#1ec722', '#139116', '#fffd38', '#e7bf2a', '#fb9124',
                                '#f90f1c', '#d00b15', '#bd0713', '#da66fb', '#bb24eb'])

@@ -12,12 +12,13 @@ Weather radars commonly suffer from the data-missing problem that limits their d
 
 The codes in this study are based on Python 3.8. The following dependencies are also necessary.
 
-```
-numpy=1.24.3
-scipy=1.10.1
-pytorch=1.12.1
-matplotlib=3.7.2
-pandas=2.0.3
+```txt
+matplotlib==3.7.2
+numpy==1.24.3
+pandas==2.0.3
+scipy==1.10.1
+torch==1.12.1
+tqdm==4.65.0
 ```
 
 ## Citation

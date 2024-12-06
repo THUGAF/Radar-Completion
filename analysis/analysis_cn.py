@@ -234,8 +234,8 @@ def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str
 
 
 if __name__ == '__main__':
-    model_names = ['MLG', 'BI', 'UNet++ GAN', 'DSA-UNet']
-    model_dirs = ['results/MLG', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
+    model_names = ['MLR', 'BI', 'UNet++GAN', 'DSA-UNet']
+    model_dirs = ['results/MLR', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
         save_metrics(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))

@@ -11,7 +11,6 @@ from scipy.stats import gaussian_kde
 
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['mathtext.default'] = 'regular'
-fontdict_cn = {'family': 'SimHei'}
 CMAP = pcolors.ListedColormap(['#ffffff', '#2aedef', '#1caff4', '#0a22f4', '#29fd2f',
                                '#1ec722', '#139116', '#fffd38', '#e7bf2a', '#fb9124',
                                '#f90f1c', '#d00b15', '#bd0713', '#da66fb', '#bb24eb'])
@@ -23,7 +22,7 @@ ANCHOR = [315, 40]
 BLOCKAGE_LEN = [40, 40]
 
 
-def plot_ppis(model_names, model_dirs, stage, img_path):
+def plot_ppi(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names) + 1
     num_row = (num_subplot + 1) // 2
@@ -73,7 +72,7 @@ def plot_ppis(model_names, model_dirs, stage, img_path):
     print('{} saved'.format(img_path))
 
 
-def plot_css(model_names, model_dirs, stage, img_path):
+def plot_cs(model_names, model_dirs, stage, img_path):
     print('Plotting {} ...'.format(img_path))
     num_subplot = len(model_names)
     num_row = (num_subplot + 1) // 2
@@ -120,15 +119,15 @@ def plot_css(model_names, model_dirs, stage, img_path):
         ax.set_aspect('equal')
         ax.set_title(model_names[i], loc='center', y=0.9, fontsize=14)
         ax.set_title(' ({})'.format(format(chr(97 + i))), loc='left', y=0.9, fontsize=16, fontweight='bold')
-        ax.set_xlabel('观测值 (dBZ)', fontsize=14, fontdict=fontdict_cn)
+        ax.set_xlabel('实测值 (dBZ)', fontsize=14, fontfamily='SimHei')
         if i == 0 or i == 2:
-            ax.set_ylabel('预测值 (dBZ)', fontsize=14, labelpad=10, fontdict=fontdict_cn)
+            ax.set_ylabel('填补值 (dBZ)', fontsize=14, labelpad=10, fontfamily='SimHei')
         ax.tick_params(labelsize=12)
         
     fig.subplots_adjust(right=0.92)
     cax = fig.add_axes([0.94, 0.20, 0.02, 0.60])
     cbar = fig.colorbar(sc, cax=cax, orientation='vertical')
-    cbar.set_label('密度', fontsize=14, labelpad=20, fontdict=fontdict_cn)
+    cbar.set_label('密度', fontsize=14, labelpad=20, fontfamily='SimHei')
     cbar.ax.tick_params(labelsize=12)
 
     fig.savefig(img_path, bbox_inches='tight')
@@ -143,9 +142,9 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     wavelength_radial, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
     wavelength_azimuthal, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
 
-    fig = plt.figure(figsize=(8, 8), dpi=300)
-    ax1 = fig.add_subplot(2, 1, 1)
-    ax2 = fig.add_subplot(2, 1, 2)
+    fig = plt.figure(figsize=(16, 4), dpi=300)
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax2 = fig.add_subplot(1, 2, 2)
     
     ax1.plot(wavelength_radial, truth_psd_radial, color='k')
     ax2.plot(wavelength_azimuthal, truth_psd_azimuthal, color='k')
@@ -161,16 +160,16 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xscale('log', base=2)
     ax1.set_yscale('log', base=10)
     ax1.invert_xaxis()
-    ax1.set_xlabel('径向波长 (km)', fontsize=12, fontdict=fontdict_cn)
-    ax1.set_ylabel('径向功率谱密度', fontsize=12, fontdict=fontdict_cn)
+    ax1.set_xlabel('径向波长 (km)', fontsize=12, fontfamily='SimHei')
+    ax1.set_ylabel('径向功率谱密度', fontsize=12, fontfamily='SimHei')
     ax1.legend(legend, loc='lower left', edgecolor='w', fancybox=False, fontsize=10)
     ax1.text(-0.1, 1.05, '(a)', fontsize=16, fontweight='bold', transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
     ax2.invert_xaxis()
-    ax2.set_xlabel('环向波长 (deg)', fontsize=12, fontdict=fontdict_cn)
-    ax2.set_ylabel('环向功率谱密度', fontsize=12, fontdict=fontdict_cn)
+    ax2.set_xlabel('环向波长 (deg)', fontsize=12, fontfamily='SimHei')
+    ax2.set_ylabel('环向功率谱密度', fontsize=12, fontfamily='SimHei')
     ax2.legend(legend, loc='lower left', edgecolor='w', fancybox=False, fontsize=10)
     ax2.text(-0.1, 1.05, '(b)', fontsize=16, fontweight='bold', transform=ax2.transAxes)
 
@@ -178,7 +177,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     print('{} saved'.format(img_path))
 
 
-def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
+def plot_bar(model_names: list, model_dirs: list, stage: str, img_path: str):
     print('Plotting {} ...'.format(img_path))
     metrics = []
     num_models = len(model_names)
@@ -188,14 +187,14 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     metrics = np.stack(metrics).transpose(0, 2, 1)
 
     num_subplot = len(df.columns)
-    fig = plt.figure(figsize=(10, num_subplot * 4), dpi=300)
+    fig = plt.figure(figsize=(14, num_subplot * 4), dpi=300)
     for i in range(num_subplot):
         ax = fig.add_subplot(num_subplot, 1, i + 1)
         labels = ['${}-{}$'.format(df.index[i], df.index[i + 1]) 
                   for i in range(len(df.index) - 2)] + ['>{}'.format(df.index[-2])] + ['$0-70$']
         
         if i == num_subplot - 1:
-            ax.set_xlabel('反射率 (dBZ)', labelpad=5, fontsize=14, fontdict=fontdict_cn)
+            ax.set_xlabel('反射率 (dBZ)', labelpad=5, fontsize=14, fontfamily='SimHei')
         ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=14)
         x = np.arange(len(df.index))
         width = 0.2
@@ -217,7 +216,7 @@ def plot_bars(model_names: list, model_dirs: list, stage: str, img_path: str):
     print('{} saved'.format(img_path))
 
 
-def save_metrics(model_names: list, model_dirs: list, stage: str, file_path: str):
+def save_metric(model_names: list, model_dirs: list, stage: str, file_path: str):
     print('Saving {} ...'.format(file_path))
     metrics = []
     num_models = len(model_names)
@@ -238,9 +237,9 @@ if __name__ == '__main__':
     model_dirs = ['results/MLR', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
-        save_metrics(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
-        plot_bars(model_names, model_dirs, stage, 'results/img_cn/bar_{}.jpg'.format(stage))
+        save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
+        plot_bar(model_names, model_dirs, stage, 'results/img_cn/bar_{}.jpg'.format(stage))
         if stage != 'test':
-            plot_ppis(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.jpg'.format(stage))
-            plot_css(model_names, model_dirs, stage, 'results/img_cn/cs_{}.jpg'.format(stage))
+            plot_ppi(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.jpg'.format(stage))
+            plot_cs(model_names, model_dirs, stage, 'results/img_cn/cs_{}.jpg'.format(stage))
             plot_psd(model_names, model_dirs, stage, 'results/img_cn/psd_{}.jpg'.format(stage))

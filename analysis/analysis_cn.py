@@ -52,7 +52,7 @@ def plot_ppi(model_names, model_dirs, stage, img_path):
                 np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size), 
                 '--', color='k', linewidth=2)
 
-        ax.set_title('({})'.format(format(chr(97 + i))), loc='left', fontsize=24, fontweight='bold')
+        # ax.set_title('({})'.format(format(chr(97 + i))), loc='left', fontsize=24, fontweight='bold')
         ax.set_title(title, loc='center', fontsize=20)
         ax.set_xlim(AZIMUTH_START_POINT / 180 * np.pi, (AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi)
         ax.set_rlim(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
@@ -118,8 +118,9 @@ def plot_cs(model_names, model_dirs, stage, img_path):
         ax.axline((0, 0), (1, 1), color='k', linewidth=1, transform=ax.transAxes)
         ax.set_aspect('equal')
         ax.set_title(model_names[i], loc='center', y=0.9, fontsize=14)
-        ax.set_title(' ({})'.format(format(chr(97 + i))), loc='left', y=0.9, fontsize=16, fontweight='bold')
-        ax.set_xlabel('实测值 (dBZ)', fontsize=14, fontfamily='SimHei')
+        # ax.set_title(' ({})'.format(format(chr(97 + i))), loc='left', y=0.9, fontsize=16, fontweight='bold')
+        if i == 2 or i == 3:
+            ax.set_xlabel('实测值 (dBZ)', fontsize=14, fontfamily='SimHei')
         if i == 0 or i == 2:
             ax.set_ylabel('填补值 (dBZ)', fontsize=14, labelpad=10, fontfamily='SimHei')
         ax.tick_params(labelsize=12)
@@ -142,7 +143,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     wavelength_radial, truth_psd_radial = psd_df_radial['wavelength_radial'], psd_df_radial['truth_psd_radial']
     wavelength_azimuthal, truth_psd_azimuthal = psd_df_azimuthal['wavelength_azimuthal'], psd_df_azimuthal['truth_psd_azimuthal']
 
-    fig = plt.figure(figsize=(16, 4), dpi=300)
+    fig = plt.figure(figsize=(14, 4), dpi=300)
     ax1 = fig.add_subplot(1, 2, 1)
     ax2 = fig.add_subplot(1, 2, 2)
     
@@ -163,7 +164,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax1.set_xlabel('径向波长 (km)', fontsize=12, fontfamily='SimHei')
     ax1.set_ylabel('径向功率谱密度', fontsize=12, fontfamily='SimHei')
     ax1.legend(legend, loc='lower left', edgecolor='w', fancybox=False, fontsize=10)
-    ax1.text(-0.1, 1.05, '(a)', fontsize=16, fontweight='bold', transform=ax1.transAxes)
+    # ax1.text(-0.1, 1.05, '(a)', fontsize=16, fontweight='bold', transform=ax1.transAxes)
 
     ax2.set_xscale('log', base=2)
     ax2.set_yscale('log', base=10)
@@ -171,7 +172,7 @@ def plot_psd(model_names, model_dirs, stage, img_path):
     ax2.set_xlabel('环向波长 (deg)', fontsize=12, fontfamily='SimHei')
     ax2.set_ylabel('环向功率谱密度', fontsize=12, fontfamily='SimHei')
     ax2.legend(legend, loc='lower left', edgecolor='w', fancybox=False, fontsize=10)
-    ax2.text(-0.1, 1.05, '(b)', fontsize=16, fontweight='bold', transform=ax2.transAxes)
+    # ax2.text(-0.1, 1.05, '(b)', fontsize=16, fontweight='bold', transform=ax2.transAxes)
 
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -201,11 +202,11 @@ def plot_bar(model_names: list, model_dirs: list, stage: str, img_path: str):
         for j in range(num_models):
             b = ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width, label=model_names[j], 
                        color=plt.get_cmap('Set1').colors[j], linewidth=0, alpha=0.7)
-            ax.bar_label(b, fmt='%.1f', padding=0.5, fontsize=9)
+            ax.bar_label(b, fmt='%.1f', fontsize=11)
         ax.set_xticks(x, labels=labels)
         ax.axhline(color='k', linestyle='--', linewidth=1)
         ax.tick_params(labelsize=12)
-        ax.text(-0.1, 1.05, '({})'.format(chr(97 + i)), fontsize=18, fontweight='bold', transform=ax.transAxes)
+        # ax.text(-0.07, 1.05, '({})'.format(chr(97 + i)), fontsize=18, fontweight='bold', transform=ax.transAxes)
 
     fig.subplots_adjust(bottom=0.10)
     lax = fig.add_axes([0.1, 0, 0.8, 0.05])

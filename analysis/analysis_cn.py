@@ -242,9 +242,9 @@ if __name__ == '__main__':
     model_dirs = ['results/MLR', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
-        # save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
+        save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
         plot_bar(model_names, model_dirs, stage, 'results/img_cn/bar_{}.png'.format(stage))
-        # if stage != 'test':
-        #     plot_ppi(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.png'.format(stage))
-        #     plot_cs(model_names, model_dirs, stage, 'results/img_cn/cs_{}.png'.format(stage))
-        #     plot_psd(model_names, model_dirs, stage, 'results/img_cn/psd_{}.png'.format(stage))
+        if stage != 'test':
+            plot_ppi(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.png'.format(stage))
+            plot_cs(model_names, model_dirs, stage, 'results/img_cn/cs_{}.png'.format(stage))
+            plot_psd(model_names, model_dirs, stage, 'results/img_cn/psd_{}.png'.format(stage))

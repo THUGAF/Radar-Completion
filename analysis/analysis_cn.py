@@ -190,30 +190,32 @@ def plot_bar(model_names: list, model_dirs: list, stage: str, img_path: str):
     metrics = np.stack(metrics).transpose(0, 2, 1)
 
     num_subplot = len(df.columns)
-    fig = plt.figure(figsize=(14, num_subplot * 4), dpi=300)
+    fig = plt.figure(figsize=(17, num_subplot * 4), dpi=300)
     for i in range(num_subplot):
         ax = fig.add_subplot(num_subplot, 1, i + 1)
         labels = ['${}-{}$'.format(df.index[i], df.index[i + 1]) 
                   for i in range(len(df.index) - 2)] + ['>{}'.format(df.index[-2])] + ['$0-70$']
         
         if i == num_subplot - 1:
-            ax.set_xlabel('反射率 (dBZ)', labelpad=5, fontsize=14, fontfamily='SimHei')
-        ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=14)
+            ax.set_xlabel('反射率 (dBZ)', labelpad=5, fontsize=16, fontfamily='SimHei')
+        ax.set_ylabel(df.columns.values[i] + ' (dBZ)', labelpad=10, fontsize=16)
         x = np.arange(len(df.index))
         width = 0.2
         for j in range(num_models):
             b = ax.bar((x + width * (j - (num_models - 1) / 2)), metrics[j, i], width, label=model_names[j], 
                        color=plt.get_cmap('Set1').colors[j], linewidth=0, alpha=0.7)
-            ax.bar_label(b, fmt='%.1f', fontsize=11)
+            ax.bar_label(b, fmt='%.1f', fontsize=12)
         ax.set_xticks(x, labels=labels)
+        ax.set_ylim(top=np.ceil(np.max(metrics[:, i])) * 1.1)
+        if i == 2:
+            ax.set_ylim(bottom=np.floor(np.min(metrics[:, i])) * 1.1, top=np.ceil(np.max(metrics[:, i])) * 1.5)
         ax.axhline(color='k', linestyle='--', linewidth=1)
-        ax.tick_params(labelsize=12)
-        # ax.text(-0.07, 1.05, '({})'.format(chr(97 + i)), fontsize=18, fontweight='bold', transform=ax.transAxes)
+        ax.tick_params(labelsize=14)
 
     fig.subplots_adjust(bottom=0.10)
     lax = fig.add_axes([0.1, 0, 0.8, 0.05])
     lax.set_axis_off()
-    lax.legend(ax.containers, model_names, fontsize=12, loc='center', ncol=len(model_names),
+    lax.legend(ax.containers, model_names, fontsize=14, loc='center', ncol=len(model_names),
                edgecolor='w', fancybox=False)
     fig.savefig(img_path, bbox_inches='tight')
     print('{} saved'.format(img_path))
@@ -240,9 +242,9 @@ if __name__ == '__main__':
     model_dirs = ['results/MLR', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
     stages = ['test', 'case_0', 'case_1']
     for stage in stages:
-        save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
-        plot_bar(model_names, model_dirs, stage, 'results/img_cn/bar_{}.jpg'.format(stage))
-        if stage != 'test':
-            plot_ppi(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.jpg'.format(stage))
-            plot_cs(model_names, model_dirs, stage, 'results/img_cn/cs_{}.jpg'.format(stage))
-            plot_psd(model_names, model_dirs, stage, 'results/img_cn/psd_{}.jpg'.format(stage))
+        # save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
+        plot_bar(model_names, model_dirs, stage, 'results/img_cn/bar_{}.png'.format(stage))
+        # if stage != 'test':
+        #     plot_ppi(model_names, model_dirs, stage, 'results/img_cn/ppi_{}.png'.format(stage))
+        #     plot_cs(model_names, model_dirs, stage, 'results/img_cn/cs_{}.png'.format(stage))
+        #     plot_psd(model_names, model_dirs, stage, 'results/img_cn/psd_{}.png'.format(stage))

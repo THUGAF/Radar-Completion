@@ -35,7 +35,7 @@ def plot_ppi(model_names, model_dirs, stage, img_path):
     thetas = np.arange(AZIMUTH_START_POINT, AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi
     rhos = np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)
-    anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
+    anchor, blockage_len = ANCHOR[int(stage[-1]) - 1], BLOCKAGE_LEN[int(stage[-1]) - 1]
     truth = np.clip(truth, a_min=0, a_max=70)
     
     for i in range(num_subplot):
@@ -85,7 +85,7 @@ def plot_cs(model_names, model_dirs, stage, img_path):
     thetas = np.arange(AZIMUTH_START_POINT, AZIMUTH_START_POINT + azimuth_size) / 180 * np.pi
     rhos = np.arange(RADIAL_START_POINT, RADIAL_START_POINT + radial_size)
     thetas, rhos = np.meshgrid(thetas, rhos)
-    anchor, blockage_len = ANCHOR[int(stage[-1])], BLOCKAGE_LEN[int(stage[-1])]
+    anchor, blockage_len = ANCHOR[int(stage[-1]) - 1], BLOCKAGE_LEN[int(stage[-1]) - 1]
     xs = truth[AZIMUTH_START_POINT + anchor: AZIMUTH_START_POINT + anchor + blockage_len, 
                RADIAL_START_POINT: RADIAL_START_POINT + radial_size]
     xs = xs.numpy().flatten()
@@ -240,7 +240,7 @@ def save_metric(model_names: list, model_dirs: list, stage: str, file_path: str)
 if __name__ == '__main__':
     model_names = ['MLR', 'BI', 'UNet++GAN', 'DSA-UNet']
     model_dirs = ['results/MLR', 'results/Bilinear', 'results/UNetpp_GAN', 'results/DSA_UNet']
-    stages = ['test', 'case_0', 'case_1']
+    stages = ['test', 'case_1', 'case_2']
     for stage in stages:
         save_metric(model_names, model_dirs, stage, 'results/img_cn/{}_metrics.xlsx'.format(stage))
         plot_bar(model_names, model_dirs, stage, 'results/img_cn/bar_{}.png'.format(stage))

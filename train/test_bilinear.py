@@ -195,9 +195,9 @@ def predict(case_loader: DataLoader):
 
         # Plot tensors
         visualizer.plot_ppi(tensors, t, args.azimuthal_range[0], args.radial_range[0],
-                            anchor, blockage_len, args.output_path, 'case_{}'.format(i))
+                            anchor, blockage_len, args.output_path, 'case_{}'.format(i + 1))
         visualizer.plot_psd(tensors, args.radial_range[0], anchor, blockage_len,
-                            args.output_path, 'case_{}'.format(i))
+                            args.output_path, 'case_{}'.format(i + 1))
         print('Figures saved')
 
     print('\nPrediction complete')

@@ -190,7 +190,7 @@ def plot_bar(model_names: list, model_dirs: list, stage: str, img_path: str):
     metrics = np.stack(metrics).transpose(0, 2, 1)
 
     num_subplot = len(df.columns)
-    fig = plt.figure(figsize=(17, num_subplot * 4), dpi=300)
+    fig = plt.figure(figsize=(15, num_subplot * 3.5), dpi=300)
     for i in range(num_subplot):
         ax = fig.add_subplot(num_subplot, 1, i + 1)
         labels = ['${}-{}$'.format(df.index[i], df.index[i + 1]) 
